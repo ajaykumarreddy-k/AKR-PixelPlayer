@@ -96,8 +96,15 @@ fun YoutubePlaylistScreen(
                                     youtubeViewModel.resolveStreamUrl(song,
                                         onResolved = { url ->
                                             Log.e("AKR_MUSIC", "✅ PLAYLIST URL FOUND: $url")
+                                            val updatedSongs = songs.map { s ->
+                                                if (s.id == song.id) {
+                                                    s.copy(contentUriString = url)
+                                                } else {
+                                                    s
+                                                }
+                                            }
                                             playerViewModel.playSongs(
-                                                listOf(song.copy(contentUriString = url)),
+                                                updatedSongs,
                                                 song.copy(contentUriString = url),
                                                 title,
                                                 playlistId

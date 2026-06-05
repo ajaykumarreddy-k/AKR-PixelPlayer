@@ -61,6 +61,7 @@ import com.akr.finalapp.data.netease.NeteaseStreamProxy
 import com.akr.finalapp.data.navidrome.NavidromeStreamProxy
 import com.akr.finalapp.data.qqmusic.QqMusicStreamProxy
 import androidx.core.net.toUri
+import com.akr.finalapp.data.repository.YoutubeRepository
 
 data class ActiveDecoderInfo(
     val name: String,
@@ -211,7 +212,8 @@ class DualPlayerEngine @Inject constructor(
     private val jellyfinStreamProxy: com.akr.finalapp.data.jellyfin.JellyfinStreamProxy,
     private val gdriveStreamProxy: com.akr.finalapp.data.gdrive.GDriveStreamProxy,
     private val telegramCacheManager: com.akr.finalapp.data.telegram.TelegramCacheManager,
-    private val connectivityStateHolder: com.akr.finalapp.presentation.viewmodel.ConnectivityStateHolder
+    private val connectivityStateHolder: com.akr.finalapp.presentation.viewmodel.ConnectivityStateHolder,
+    private val youtubeRepository: YoutubeRepository
 ) {
     private companion object {
         private const val AUDIO_OFFLOAD_STALL_FALLBACK_MS = 4_000L
@@ -224,7 +226,7 @@ class DualPlayerEngine @Inject constructor(
         private const val POST_TRANSITION_OFFLOAD_GUARD_MS = 2_000L
         private const val MAX_AUXILIARY_TIMELINE_ITEMS = 200
         private val LOCAL_MEDIA_SCHEMES = setOf("content", "file", "android.resource")
-        private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "telegram", "netease", "qqmusic", "navidrome", "jellyfin", "gdrive")
+        private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "telegram", "netease", "qqmusic", "navidrome", "jellyfin", "gdrive", "youtube")
     }
 
     data class TransitionTarget(
@@ -933,12 +935,16 @@ class DualPlayerEngine @Inject constructor(
                 val scheme = uri.scheme
                 if (scheme in REMOTE_MEDIA_SCHEMES) {
                     val originalUri = uri.toString()
-                    val resolved = resolvedUriCache.get(originalUri)
+                    var resolved = resolvedUriCache.get(originalUri)
+                    if (resolved == null) {
+                        Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache MISS for %s - resolving synchronously", scheme)
+                        resolved = kotlinx.coroutines.runBlocking {
+                            runCatching { resolveCloudUri(uri) }.getOrNull()
+                        }
+                    }
                     if (resolved != null) {
                         return dataSpec.buildUpon().setUri(resolved).build()
                     }
-                    
-                    Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache MISS for %s - attempting to use original URI", scheme)
                 }
                 return dataSpec
             }
@@ -1048,6 +1054,7 @@ class DualPlayerEngine @Inject constructor(
             "navidrome" -> resolveNavidromeUriAsync(uriString)
             "jellyfin" -> resolveJellyfinUriAsync(uriString)
             "gdrive" -> resolveGDriveUriAsync(uriString)
+            "youtube" -> resolveYoutubeUriAsync(uri)
             else -> null
         }
 
@@ -1111,6 +1118,12 @@ class DualPlayerEngine @Inject constructor(
         }
         if (!gdriveStreamProxy.ensureReady(5_000L)) return@withContext null
         gdriveStreamProxy.resolveGDriveUri(uriString)?.toUri()
+    }
+
+    private suspend fun resolveYoutubeUriAsync(uri: Uri): Uri? = withContext(Dispatchers.IO) {
+        val videoId = uri.host ?: return@withContext null
+        Timber.tag("DualPlayerEngine").d("resolveYoutubeUriAsync: videoId=%s", videoId)
+        youtubeRepository.resolveStreamUrl(videoId).getOrNull()?.toUri()
     }
 
     suspend fun resolveMediaItem(mediaItem: MediaItem): MediaItem {
