@@ -84,5 +84,66 @@ if (sourceFile.exists()) {
     }
 }
 
+// Automatically delete dead/useless files and directories during Gradle configuration phase
+val deadFiles = listOf(
+    "cleanup_assets.py",
+    "rename_modules.py",
+    "rename_package.py",
+    "pyproject.toml",
+    "uv.lock"
+)
+for (fileName in deadFiles) {
+    val file = java.io.File(rootDir, fileName)
+    if (file.exists()) {
+        file.delete()
+    }
+}
+
+val deadDirs = listOf(
+    "scratch",
+    "tools",
+    ".venv"
+)
+for (dirName in deadDirs) {
+    val dir = java.io.File(rootDir, dirName)
+    if (dir.exists()) {
+        dir.deleteRecursively()
+    }
+}
+
+// Automatically correct app_name in all locale strings.xml files to ensure proper alphabetical sorting in the app drawer
+val resDirs = listOf(
+    java.io.File(rootDir, "app/src/main/res"),
+    java.io.File(rootDir, "app/src/debug/res"),
+    java.io.File(rootDir, "wear/src/main/res")
+)
+for (resDir in resDirs) {
+    if (resDir.exists()) {
+        resDir.listFiles { f -> f.isDirectory && f.name.startsWith("values") }?.forEach { valuesDir ->
+            val stringsFile = java.io.File(valuesDir, "strings.xml")
+            if (stringsFile.exists()) {
+                val content = stringsFile.readText()
+                var newContent = content
+                if (valuesDir.absolutePath.contains("/debug/")) {
+                    newContent = content.replace(
+                        Regex("""<string\s+name="app_name">PixelPlayer\s*\[D\]</string>"""),
+                        """<string name="app_name">AKR - Pixelplayer [D]</string>"""
+                    )
+                } else {
+                    newContent = content.replace(
+                        Regex("""<string\s+name="app_name">PixelPlayer</string>"""),
+                        """<string name="app_name">AKR - Pixelplayer</string>"""
+                    )
+                }
+                if (newContent != content) {
+                    stringsFile.writeText(newContent)
+                }
+            }
+        }
+    }
+}
+
+
+
 
 

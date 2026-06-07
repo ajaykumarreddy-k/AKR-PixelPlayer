@@ -214,9 +214,12 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
 
-        // MD3 Optimization: Release Splash Screen immediately to render UI skeleton.
-        // Data loading is handled via optimistic UI and smooth transitions.
-        splashScreen.setKeepOnScreenCondition { false }
+        // Keep the splash screen visible until the initial data gate is resolved and the layout is ready.
+        // This avoids any blank/black frame flashes or showing the loading indicator briefly.
+        splashScreen.setKeepOnScreenCondition {
+            !isUIVisiblyReady
+        }
+
 
         // LEER SEÑAL DE BENCHMARK
         val isBenchmarkMode = intent.getBooleanExtra("is_benchmark", false)
@@ -294,11 +297,15 @@ class MainActivity : ComponentActivity() {
                     label = "AppContentAlpha"
                 )
 
-                LaunchedEffect(Unit) {
-                    // Delay slightly to ensure first frame layout is done behind Splash
-                    delay(100)
-                    contentVisible = true
+                LaunchedEffect(showSetupScreen) {
+                    if (showSetupScreen != null) {
+                        // Delay slightly to ensure first frame layout is done behind Splash
+                        delay(100)
+                        contentVisible = true
+                        isUIVisiblyReady = true
+                    }
                 }
+
 
                 Surface(
                     modifier = Modifier.fillMaxSize().graphicsLayer { alpha = contentAlpha }, 

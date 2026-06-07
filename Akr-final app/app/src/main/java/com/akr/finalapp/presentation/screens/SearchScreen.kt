@@ -112,6 +112,7 @@ import com.akr.finalapp.presentation.components.PlaylistCover
 import com.akr.finalapp.presentation.components.resolveMainScreenBottomGradientHeight
 import com.akr.finalapp.presentation.components.resolveNavBarOccupiedHeight
 import com.akr.finalapp.presentation.navigation.Screen
+import com.akr.finalapp.presentation.navigation.navigateToTopLevelSafely
 import com.akr.finalapp.presentation.screens.search.components.GenreCategoriesGrid
 import com.akr.finalapp.presentation.viewmodel.PlaylistViewModel
 import com.akr.finalapp.utils.formatSongCount
@@ -367,6 +368,9 @@ fun SearchScreen(
                                 .d("Genre clicked: ${genre.name} (ID: ${genre.id})")
                             val encodedGenreId = java.net.URLEncoder.encode(genre.id, "UTF-8")
                             navController.navigateSafely(Screen.GenreDetail.createRoute(encodedGenreId))
+                        },
+                        onYoutubeSearchClick = {
+                            navController.navigateToTopLevelSafely(Screen.YoutubeSearch.createRoute(null))
                         },
                         playerViewModel = playerViewModel,
                         modifier = Modifier.padding(top = 12.dp)

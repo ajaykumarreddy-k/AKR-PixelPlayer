@@ -1,6 +1,10 @@
 package com.akr.finalapp.presentation.screens.search.components
 
 import androidx.annotation.OptIn
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,6 +63,7 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 fun GenreCategoriesGrid(
     genres: List<Genre>,
     onGenreClick: (Genre) -> Unit,
+    onYoutubeSearchClick: () -> Unit,
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -140,6 +145,14 @@ fun GenreCategoriesGrid(
                 }
             }
         }
+
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            YoutubeSearchTile(
+                onClick = onYoutubeSearchClick,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+
         items(genres, key = { it.id }) { genre ->
             GenreCard(
                 genre = genre,
@@ -147,6 +160,97 @@ fun GenreCategoriesGrid(
                 onClick = { onGenreClick(genre) },
                 isGridView = isGridView
             )
+        }
+    }
+}
+
+@Composable
+fun YoutubeSearchTile(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isDark = LocalPixelPlayDarkTheme.current
+    val onBackgroundColor = MaterialTheme.colorScheme.onErrorContainer
+    val shape = RoundedCornerShape(20.dp)
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(96.dp)
+            .clip(shape)
+            .clickable(onClick = onClick),
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = if (isDark) {
+                            listOf(
+                                MaterialTheme.colorScheme.errorContainer,
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                            )
+                        } else {
+                            listOf(
+                                MaterialTheme.colorScheme.errorContainer,
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            )
+                        }
+                    )
+                )
+        ) {
+            // Background Icon
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 12.dp, y = 12.dp)
+            ) {
+                androidx.compose.material3.Icon(
+                    painter = painterResource(id = R.drawable.alt_video),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(0.18f),
+                    tint = onBackgroundColor
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "YouTube Music",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = onBackgroundColor
+                    )
+                    Text(
+                        text = "Search and stream online songs",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = onBackgroundColor.copy(alpha = 0.8f)
+                    )
+                }
+
+                androidx.compose.material3.Icon(
+                    painter = painterResource(R.drawable.rounded_play_circle_24),
+                    contentDescription = "Search YouTube",
+                    tint = onBackgroundColor,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
         }
     }
 }

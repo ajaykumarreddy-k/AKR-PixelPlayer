@@ -7,7 +7,9 @@ import androidx.compose.runtime.Immutable
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Search : Screen("search")
-    object YoutubeSearch : Screen("youtube_search")
+    object YoutubeSearch : Screen("youtube_search?query={query}") {
+        fun createRoute(query: String? = null) = if (query != null) "youtube_search?query=$query" else "youtube_search"
+    }
     object YoutubePlaylist : Screen("youtube_playlist/{playlistId}") {
         fun createRoute(playlistId: String) = "youtube_playlist/$playlistId"
     }

@@ -168,7 +168,14 @@ fun AppNavigation(
                 }
             }
             composable(
-                Screen.YoutubeSearch.route,
+                route = Screen.YoutubeSearch.route,
+                arguments = listOf(
+                    navArgument("query") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                ),
                 enterTransition = {
                     mainRootEnterTransition(
                         fromRoute = initialState.destination.route,
@@ -197,12 +204,14 @@ fun AppNavigation(
                         fallback = popExitTransition()
                     )
                 },
-            ) {
+            ) { backStackEntry ->
+                val query = backStackEntry.arguments?.getString("query")
                 ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
                     YoutubeSearchScreen(
                         paddingValues = paddingValues,
                         playerViewModel = playerViewModel,
-                        navController = navController
+                        navController = navController,
+                        initialQuery = query
                     )
                 }
             }

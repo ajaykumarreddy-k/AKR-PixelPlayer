@@ -86,10 +86,6 @@ import com.akr.finalapp.R
 import com.akr.finalapp.data.model.Song
 import com.akr.finalapp.data.preferences.CollagePattern
 import com.akr.finalapp.presentation.components.AlbumArtCollage
-import com.akr.finalapp.presentation.netease.dashboard.NeteaseDashboardViewModel
-import com.akr.finalapp.presentation.jellyfin.dashboard.JellyfinDashboardViewModel
-import com.akr.finalapp.presentation.navidrome.dashboard.NavidromeDashboardViewModel
-import com.akr.finalapp.presentation.qqmusic.dashboard.QqMusicDashboardViewModel
 import com.akr.finalapp.presentation.components.DailyMixSection
 import com.akr.finalapp.presentation.components.HomeGradientTopBar
 import com.akr.finalapp.presentation.components.HomeOptionsBottomSheet
@@ -128,10 +124,6 @@ fun HomeScreen(
     paddingValuesParent: PaddingValues,
     playerViewModel: PlayerViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
-    neteaseViewModel: NeteaseDashboardViewModel = hiltViewModel(),
-    qqMusicViewModel: QqMusicDashboardViewModel = hiltViewModel(),
-    navidromeViewModel: NavidromeDashboardViewModel = hiltViewModel(),
-    jellyfinViewModel: JellyfinDashboardViewModel = hiltViewModel(),
     onOpenSidebar: () -> Unit
 ) {
     val context = LocalContext.current

@@ -41,7 +41,8 @@ fun YoutubeSearchScreen(
     paddingValues: PaddingValues,
     navController: NavController,
     youtubeViewModel: YoutubeViewModel = hiltViewModel(),
-    playerViewModel: PlayerViewModel = hiltViewModel()
+    playerViewModel: PlayerViewModel = hiltViewModel(),
+    initialQuery: String? = null
 ) {
     val context = LocalContext.current
     val searchQuery by youtubeViewModel.searchQuery.collectAsStateWithLifecycle()
@@ -52,6 +53,13 @@ fun YoutubeSearchScreen(
     val savedPlaylists by youtubeViewModel.savedPlaylists.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(initialQuery) {
+        if (initialQuery != null && initialQuery.isNotBlank() && searchQuery != initialQuery) {
+            youtubeViewModel.updateSearchQuery(initialQuery)
+            youtubeViewModel.search()
+        }
+    }
 
     var showPlaylistDialog by remember { mutableStateOf(false) }
     var playlistUrlInput by remember { mutableStateOf("") }

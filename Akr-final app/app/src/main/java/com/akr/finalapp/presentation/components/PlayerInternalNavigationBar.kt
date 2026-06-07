@@ -125,7 +125,9 @@ private fun PlayerInternalNavigationItemsRow(
         val scope = rememberCoroutineScope()
         var lastSearchTapTimestamp by remember { mutableStateOf(0L) }
         navItems.forEach { item ->
-            val isSelected = currentRoute != null && currentRoute == item.screen.route
+            val isSelected = currentRoute != null && (
+                currentRoute.substringBefore("?") == item.screen.route.substringBefore("?")
+            )
             val selectedColor = MaterialTheme.colorScheme.primary
             val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
             val indicatorColorFromTheme = MaterialTheme.colorScheme.secondaryContainer
@@ -165,9 +167,10 @@ private fun PlayerInternalNavigationItemsRow(
                         return@click
                     }
 
-                    val itemRoute = item.screen.route
-                    val isSearchTab = itemRoute == Screen.Search.route
-                    val isAlreadySelected = latestCurrentRoute == itemRoute
+                    val itemRoute = item.screen.route.substringBefore("?")
+                    val isSearchTab = itemRoute == Screen.Search.route.substringBefore("?")
+                    val currentRouteVal = latestCurrentRoute
+                    val isAlreadySelected = currentRouteVal != null && currentRouteVal.substringBefore("?") == itemRoute
 
                     if (isSearchTab) {
                         val now = SystemClock.elapsedRealtime()
