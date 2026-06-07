@@ -2,6 +2,7 @@ package com.akr.finalapp.presentation.screens
 
 import com.akr.finalapp.presentation.navigation.navigateSafely
 import com.akr.finalapp.presentation.navigation.navigateSafelyReplacing
+import com.akr.finalapp.ui.theme.MontserratFamily
 
 import android.content.Intent
 import androidx.activity.compose.ReportDrawnWhen
@@ -85,9 +86,6 @@ import com.akr.finalapp.R
 import com.akr.finalapp.data.model.Song
 import com.akr.finalapp.data.preferences.CollagePattern
 import com.akr.finalapp.presentation.components.AlbumArtCollage
-import com.akr.finalapp.presentation.components.BetaInfoBottomSheet
-import com.akr.finalapp.presentation.components.Beta05CleanInstallDisclaimerDialog
-import com.akr.finalapp.presentation.components.ChangelogBottomSheet
 import com.akr.finalapp.presentation.netease.dashboard.NeteaseDashboardViewModel
 import com.akr.finalapp.presentation.jellyfin.dashboard.JellyfinDashboardViewModel
 import com.akr.finalapp.presentation.navidrome.dashboard.NavidromeDashboardViewModel
@@ -105,7 +103,6 @@ import com.akr.finalapp.presentation.model.collectRecentlyPlayedSongIds
 import com.akr.finalapp.presentation.model.mapRecentlyPlayedSongs
 import com.akr.finalapp.presentation.components.subcomps.PlayingEqIcon
 import com.akr.finalapp.presentation.navigation.Screen
-import com.akr.finalapp.presentation.components.StreamingProviderSheet
 import com.akr.finalapp.presentation.telegram.auth.TelegramLoginActivity
 import com.akr.finalapp.presentation.viewmodel.PlayerViewModel
 import com.akr.finalapp.presentation.viewmodel.SettingsViewModel
@@ -248,12 +245,7 @@ fun HomeScreen(
     val bottomGradientHeight = resolveMainScreenBottomGradientHeight(navBarCompactMode)
 
     var showOptionsBottomSheet by remember { mutableStateOf(false) }
-    var showChangelogBottomSheet by remember { mutableStateOf(false) }
-    var showBetaInfoBottomSheet by remember { mutableStateOf(false) }
-    var showStreamingProviderSheet by remember { mutableStateOf(false) }
-    var cleanInstallDisclaimerDismissedThisSession by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-    val betaSheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
     LocalContext.current
 
@@ -302,9 +294,6 @@ fun HomeScreen(
 
     // Drawer state for sidebar
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val shouldShowCleanInstallDisclaimer =
-        settingsUiState.beta05CleanInstallDisclaimerDismissed == false &&
-            !cleanInstallDisclaimerDismissedThisSession
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -315,18 +304,6 @@ fun HomeScreen(
                 HomeGradientTopBar(
                     onNavigationIconClick = {
                         navController.navigateSafely(Screen.Settings.route)
-                    },
-                    onMoreOptionsClick = {
-                        showChangelogBottomSheet = true
-                    },
-                    onBetaClick = {
-                        showBetaInfoBottomSheet = true
-                    },
-                    onTelegramClick = {
-                         showStreamingProviderSheet = true
-                    },
-                    onMenuClick = {
-                        // onOpenSidebar() // Disabled
                     },
                     isScrolled = isScrolledPastThreshold.value
                 )
@@ -531,58 +508,7 @@ fun HomeScreen(
             )
         }
     }
-    if (showChangelogBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showChangelogBottomSheet = false },
-            sheetState = sheetState
-        ) {
-            ChangelogBottomSheet()
-        }
-    }
-    if (showBetaInfoBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showBetaInfoBottomSheet = false },
-            sheetState = betaSheetState,
-            //contentWindowInsets = { WindowInsets.statusBars.only(WindowInsets.statusBars) }
-        ) {
-            BetaInfoBottomSheet()
-        }
-    }
-    if (showStreamingProviderSheet) {
-        val isNeteaseLoggedIn by neteaseViewModel.isLoggedIn.collectAsStateWithLifecycle()
-        val isQqMusicLoggedIn by qqMusicViewModel.isLoggedIn.collectAsStateWithLifecycle()
-        val isNavidromeLoggedIn by navidromeViewModel.isLoggedIn.collectAsStateWithLifecycle()
-        val isJellyfinLoggedIn by jellyfinViewModel.isLoggedIn.collectAsStateWithLifecycle()
-        StreamingProviderSheet(
-            onDismissRequest = { showStreamingProviderSheet = false },
-            isNeteaseLoggedIn = isNeteaseLoggedIn,
-            onNavigateToNeteaseDashboard = {
-                navController.navigateSafely(Screen.NeteaseDashboard.route)
-            },
-            isQqMusicLoggedIn = isQqMusicLoggedIn,
-            onNavigateToQqMusicDashboard = {
-                navController.navigateSafely(Screen.QqMusicDashboard.route)
-            },
-            isNavidromeLoggedIn = isNavidromeLoggedIn,
-            onNavigateToNavidromeDashboard = {
-                navController.navigateSafely(Screen.NavidromeDashboard.route)
-            },
-            isJellyfinLoggedIn = isJellyfinLoggedIn,
-            onNavigateToJellyfinDashboard = {
-                navController.navigateSafely(Screen.JellyfinDashboard.route)
-            }
-        )
-    }
-    if (shouldShowCleanInstallDisclaimer) {
-        Beta05CleanInstallDisclaimerDialog(
-            onDismiss = { dontShowAgain ->
-                cleanInstallDisclaimerDismissedThisSession = true
-                if (dontShowAgain) {
-                    settingsViewModel.setBeta05CleanInstallDisclaimerDismissed(true)
-                }
-            }
-        )
-    }
+
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -861,25 +787,12 @@ fun SongListItemFavsWrapper(
 }
 
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberYourMixTitleStyle(): TextStyle {
     return remember {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(636),
-                        FontVariation.width(152f),
-                        FontVariation.Setting("ROND", 50f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(760),
+            fontFamily = MontserratFamily,
+            fontWeight = FontWeight.Bold,
             fontSize = 64.sp,
             lineHeight = 62.sp
         )

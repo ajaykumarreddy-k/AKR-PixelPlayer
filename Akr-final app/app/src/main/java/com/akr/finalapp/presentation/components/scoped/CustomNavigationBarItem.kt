@@ -90,8 +90,30 @@ fun RowScope.CustomNavigationBarItem(
         label = "iconScale"
     )
 
+    // Animaciones para el indicador de fondo (RenderThread-friendly)
+    val indicatorAlpha by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = tween(durationMillis = 150),
+        label = "indicatorAlpha"
+    )
+
+    val indicatorScale by animateFloatAsState(
+        targetValue = if (selected) 1f else 0.72f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "indicatorScale"
+    )
+
     // Determinar si mostrar la etiqueta
     val showLabel = label != null && (alwaysShowLabel || selected)
+    val labelAlpha by animateFloatAsState(
+        targetValue = if (showLabel) 1f else 0f,
+        animationSpec = tween(durationMillis = 150),
+        label = "labelAlpha"
+    )
+
     val indicatorWidth = 64.dp
     val indicatorHeight = 32.dp
     val iconWidth = 48.dp
@@ -110,7 +132,7 @@ fun RowScope.CustomNavigationBarItem(
                 enabled = enabled,
                 role = Role.Tab,
                 interactionSource = interactionSource,
-                indication = null //ripple(bounded = true, radius = 24.dp) // Ripple contenido
+                indication = null
             )
             .semantics {
                  if (contentDescription != null) {
@@ -126,35 +148,23 @@ fun RowScope.CustomNavigationBarItem(
             modifier = Modifier
                 .size(indicatorWidth, indicatorHeight)
         ) {
-            // Indicador de fondo (pill shape para Material 3 Expressive)
-            androidx.compose.animation.AnimatedVisibility(
-                visible = selected,
-                enter = fadeIn(animationSpec = tween(100)) + // Un fade in más rápido
-                        scaleIn(
-                            animationSpec = spring( // Usamos spring para el scaleIn
-                                dampingRatio = Spring.DampingRatioMediumBouncy, // Proporciona un rebote moderado
-                                stiffness = Spring.StiffnessLow // Puedes ajustar la rigidez
-                                // initialScale para que empiece un poco más pequeño si quieres más impacto
-                                // initialScale = 0.8f // (Opcional)
-                            ),
-                            // También puedes ajustar initialScale dentro de scaleIn si es necesario
-                            // initialScale = 0.8f // Este es el valor por defecto de scaleIn si no se especifica dentro de spring
-                        ),
-                exit = fadeOut(animationSpec = tween(100)) +
-                        scaleOut(animationSpec = tween(100, easing = EaseInQuart)) // Mantenemos el exit como estaba o lo ajustamos según se necesite
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = indicatorPadding)
-                        .background(
-                            color = indicatorColor,
-                            shape = indicatorShape
-                        )
-                )
-            }
+            // Indicador de fondo usando graphicsLayer para evitar relayouts
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = indicatorPadding)
+                    .graphicsLayer {
+                        alpha = indicatorAlpha
+                        scaleX = indicatorScale
+                        scaleY = indicatorScale
+                    }
+                    .background(
+                        color = indicatorColor,
+                        shape = indicatorShape
+                    )
+            )
 
-            // Área clicable del ícono (más pequeña que el container)
+            // Área clicable del ícono
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -164,7 +174,6 @@ fun RowScope.CustomNavigationBarItem(
                         scaleX = iconScale
                         scaleY = iconScale
                     }
-
             ) {
                 // Ícono
                 CompositionLocalProvider(LocalContentColor provides iconColor) {
@@ -181,15 +190,15 @@ fun RowScope.CustomNavigationBarItem(
             }
         }
 
-        // Etiqueta con animación
-        androidx.compose.animation.AnimatedVisibility(
-            visible = showLabel,
-            enter = fadeIn(animationSpec = tween(200, delayMillis = 50)),
-            exit = fadeOut(animationSpec = tween(100))
-        ) {
+        // Etiqueta con animación de opacidad usando graphicsLayer
+        if (label != null) {
             Spacer(modifier = Modifier.height(4.dp))
             Box(
-                modifier = Modifier.padding(top = 4.dp)
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .graphicsLayer {
+                        alpha = labelAlpha
+                    }
             ) {
                 ProvideTextStyle(
                     value = MaterialTheme.typography.labelMedium.copy(
@@ -198,7 +207,7 @@ fun RowScope.CustomNavigationBarItem(
                         fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal
                     )
                 ) {
-                    label?.invoke()
+                    label()
                 }
             }
         }

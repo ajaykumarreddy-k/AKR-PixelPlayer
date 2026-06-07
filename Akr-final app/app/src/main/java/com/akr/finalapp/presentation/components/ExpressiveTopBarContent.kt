@@ -32,6 +32,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.style.TextOverflow
 import com.akr.finalapp.R
+import com.akr.finalapp.ui.theme.MontserratFamily
 import kotlin.math.roundToInt
 
 private const val DefaultTopBarTitleWidthAxis = 100f
@@ -174,27 +175,9 @@ fun ExpressiveTopBarContent(
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
-@Composable
 private fun rememberGoogleSansFlexFontFamily(
     fontWeight: FontWeight,
     widthAxis: Float
 ): FontFamily {
-    val sanitizedWidthAxis = widthAxis.coerceIn(1f, DefaultTopBarTitleWidthAxis).roundToInt().toFloat()
-    return remember(fontWeight, sanitizedWidthAxis) {
-        FontFamily(
-            Font(
-                resId = R.font.gflex_variable,
-                weight = fontWeight,
-                variationSettings = FontVariation.Settings(
-                    FontVariation.weight(fontWeight.weight),
-                    FontVariation.width(sanitizedWidthAxis),
-                    FontVariation.Setting("ROND", TopBarTitleRoundedAxis),
-                    FontVariation.Setting("XTRA", TopBarTitleXtraAxis),
-                    FontVariation.Setting("YOPQ", TopBarTitleYopqAxis),
-                    FontVariation.Setting("YTLC", TopBarTitleYtlcAxis)
-                )
-            )
-        )
-    }
+    return MontserratFamily
 }

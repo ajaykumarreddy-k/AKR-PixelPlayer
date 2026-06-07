@@ -1,0 +1,6 @@
+[project]
+name = "akr-music-scripts"
+version = "0.1.0"
+description = "Helper scripts for AKR Music app development"
+requires-python = ">=3.10"
+dependencies = []

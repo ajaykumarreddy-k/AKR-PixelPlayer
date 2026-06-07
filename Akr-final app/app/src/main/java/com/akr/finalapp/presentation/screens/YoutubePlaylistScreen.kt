@@ -49,6 +49,11 @@ fun YoutubePlaylistScreen(
                 title = t
                 songs = s
                 isLoading = false
+                youtubeViewModel.savePlaylist(
+                    id = playlistId,
+                    name = t,
+                    url = "https://music.youtube.com/playlist?list=$playlistId"
+                )
             },
             onError = { e ->
                 Log.e("AKR_MUSIC", "❌ Playlist load error: $e")

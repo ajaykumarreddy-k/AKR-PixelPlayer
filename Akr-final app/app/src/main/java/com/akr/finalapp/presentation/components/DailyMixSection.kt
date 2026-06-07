@@ -43,6 +43,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
+import com.akr.finalapp.ui.theme.MontserratFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -415,26 +416,12 @@ private fun ViewAllDailyMixButton(
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberDailyMixTitleStyle(): TextStyle {
     return remember {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(630),
-                        FontVariation.width(136f),
-                        FontVariation.grade(40),
-                        FontVariation.Setting("ROND", 100f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(630),
+            fontFamily = MontserratFamily,
+            fontWeight = FontWeight.Bold,
             fontSize = 20.sp,
             lineHeight = 22.sp,
             letterSpacing = (-0.35).sp

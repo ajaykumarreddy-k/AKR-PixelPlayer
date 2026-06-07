@@ -20,6 +20,7 @@ import com.akr.finalapp.data.model.LyricsSourcePreference
 import com.akr.finalapp.data.model.TransitionSettings
 import com.akr.finalapp.data.equalizer.EqualizerPreset // Added import
 import com.akr.finalapp.data.model.StorageFilter
+import com.akr.finalapp.data.model.SavedYoutubePlaylist
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.text.get
@@ -239,6 +240,9 @@ constructor(
         // ReplayGain
         val REPLAYGAIN_ENABLED = booleanPreferencesKey("replaygain_enabled")
         val REPLAYGAIN_USE_ALBUM_GAIN = booleanPreferencesKey("replaygain_use_album_gain")
+
+        // Saved YouTube Playlists
+        val SAVED_YOUTUBE_PLAYLISTS = stringPreferencesKey("saved_youtube_playlists_json")
     }
 
     val appRebrandDialogShownFlow: Flow<Boolean> =
@@ -1790,6 +1794,50 @@ constructor(
         dataStore.edit {
             it.remove(PreferencesKeys.LAST_PLAYLIST_ID)
             it.remove(PreferencesKeys.LAST_PLAYLIST_NAME)
+        }
+    }
+
+    // --- Saved YouTube Playlists ---
+
+    val savedYoutubePlaylistsFlow: Flow<List<SavedYoutubePlaylist>> =
+        dataStore.data.map { preferences ->
+            preferences[PreferencesKeys.SAVED_YOUTUBE_PLAYLISTS]?.let { jsonString ->
+                try {
+                    json.decodeFromString<List<SavedYoutubePlaylist>>(jsonString)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } ?: emptyList()
+        }
+
+    suspend fun saveYoutubePlaylist(playlist: SavedYoutubePlaylist) {
+        dataStore.edit { preferences ->
+            val currentList = preferences[PreferencesKeys.SAVED_YOUTUBE_PLAYLISTS]?.let { jsonString ->
+                try {
+                    json.decodeFromString<List<SavedYoutubePlaylist>>(jsonString)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } ?: emptyList()
+
+            // Filter out any existing playlist with the same ID, and prepend the new one
+            val updatedList = listOf(playlist) + currentList.filter { it.id != playlist.id }
+            preferences[PreferencesKeys.SAVED_YOUTUBE_PLAYLISTS] = json.encodeToString(updatedList)
+        }
+    }
+
+    suspend fun removeSavedYoutubePlaylist(playlistId: String) {
+        dataStore.edit { preferences ->
+            val currentList = preferences[PreferencesKeys.SAVED_YOUTUBE_PLAYLISTS]?.let { jsonString ->
+                try {
+                    json.decodeFromString<List<SavedYoutubePlaylist>>(jsonString)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } ?: emptyList()
+
+            val updatedList = currentList.filter { it.id != playlistId }
+            preferences[PreferencesKeys.SAVED_YOUTUBE_PLAYLISTS] = json.encodeToString(updatedList)
         }
     }
 }

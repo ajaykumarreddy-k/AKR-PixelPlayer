@@ -5,6 +5,7 @@ package com.akr.finalapp.presentation.screens
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import com.akr.finalapp.ui.theme.MontserratFamily
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Canvas
@@ -956,20 +957,12 @@ private data class TrackShareSlice(
     val color: Color
 )
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberStatsSectionTitleStyle(): TextStyle {
     return remember {
         androidx.compose.ui.text.TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(570)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(570),
+            fontFamily = MontserratFamily,
+            fontWeight = FontWeight.SemiBold,
             fontSize = 24.sp,
             lineHeight = 28.sp,
             letterSpacing = (-0.2).sp
@@ -977,7 +970,6 @@ private fun rememberStatsSectionTitleStyle(): TextStyle {
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberStatsAxisLabelStyle(range: StatsTimeRange): TextStyle {
     val fontSize = when (range) {
@@ -987,15 +979,8 @@ private fun rememberStatsAxisLabelStyle(range: StatsTimeRange): TextStyle {
     }
     return remember(range, fontSize) {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(520)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(520),
+            fontFamily = MontserratFamily,
+            fontWeight = FontWeight.Medium,
             fontSize = fontSize,
             lineHeight = if (range == StatsTimeRange.YEAR) 12.sp else 11.sp,
             letterSpacing = 0.sp
@@ -1003,22 +988,12 @@ private fun rememberStatsAxisLabelStyle(range: StatsTimeRange): TextStyle {
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberStatsMetricValueStyle(compact: Boolean): TextStyle {
     return remember(compact) {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.genre_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(650),
-                        FontVariation.width(95f),
-                        FontVariation.grade(30)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(650),
+            fontFamily = MontserratFamily,
+            fontWeight = FontWeight.Bold,
             fontSize = if (compact) 10.sp else 12.sp,
             lineHeight = if (compact) 12.sp else 14.sp,
             letterSpacing = 0.sp

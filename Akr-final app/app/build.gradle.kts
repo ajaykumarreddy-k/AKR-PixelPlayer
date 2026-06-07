@@ -56,11 +56,16 @@ android {
                 "/META-INF/io.netty.versions.properties",
                 "META-INF/CONTRIBUTORS.md",
                 "META-INF/NOTICE.txt",
-                "META-INF/NOTICE.md"
-            )
-            pickFirsts += listOf(
+                "META-INF/NOTICE.md",
                 "META-INF/LICENSE.md",
-                "META-INF/LICENSE.txt"
+                "META-INF/LICENSE.txt",
+                "META-INF/license.txt",
+                "META-INF/notice.txt",
+                "META-INF/ASL2.0",
+                "META-INF/*.kotlin_module",
+                "**/*.proto",
+                "**/*.properties",
+                "**/*.txt"
             )
         }
     }
@@ -245,7 +250,6 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.exoplayer.ffmpeg)
-    implementation(libs.androidx.media3.exoplayer.midi)
     implementation(libs.androidx.media3.transformer)
     implementation(libs.androidx.mediarouter)
     implementation(libs.androidx.media)

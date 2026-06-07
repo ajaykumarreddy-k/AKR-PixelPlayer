@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,8 @@ import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.akr.finalapp.utils.CrashLogData
 import androidx.compose.ui.res.stringResource
 import com.akr.finalapp.R
+
 
 /**
  * Material3 Expressive styled dialog that displays crash information
@@ -142,6 +146,29 @@ fun CrashReportDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Action buttons
+                Button(
+                    onClick = {
+                        val reportUrl = "https://github.com/ajaykumarreddy-k/AKR-PixelPlayer/issues/new?title=Crash+Report&body=${Uri.encode(crashLog.getFullLog())}"
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(reportUrl))
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.BugReport,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Report on GitHub")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

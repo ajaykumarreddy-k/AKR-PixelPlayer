@@ -4,6 +4,7 @@ package com.akr.finalapp.presentation.screens
 
 import com.akr.finalapp.presentation.navigation.navigateSafely
 import com.akr.finalapp.presentation.navigation.navigateSafelyReplacing
+import com.akr.finalapp.ui.theme.MontserratFamily
 
 import android.os.Trace
 import android.text.format.Formatter
@@ -2606,27 +2607,11 @@ private val LibraryNavigationPillMinimumTextWidth = 56.dp
 private val LibraryNavigationPillArrowPaddingExpanded = 10.dp
 private val LibraryNavigationPillArrowPaddingCompressed = 4.dp
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberLibraryNavigationPillTitleStyle(widthAxis: Float): TextStyle {
-    return remember(widthAxis) {
+    return remember {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(400),
-                        FontVariation.width(widthAxis.coerceIn(
-                            LibraryNavigationPillTitleWidthMin,
-                            LibraryNavigationPillTitleWidthMax
-                        )),
-                        FontVariation.Setting("ROND", 100f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
+            fontFamily = MontserratFamily,
             fontWeight = FontWeight.SemiBold,
             fontSize = 26.sp,
             lineHeight = 28.sp,

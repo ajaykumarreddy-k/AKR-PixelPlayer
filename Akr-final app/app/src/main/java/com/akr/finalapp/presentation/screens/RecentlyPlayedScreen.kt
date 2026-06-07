@@ -43,6 +43,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.akr.finalapp.ui.theme.MontserratFamily
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
@@ -455,26 +456,12 @@ private fun ExpressiveRecentlyPlayedHeader(
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberRecentlyPlayedTitleStyle(): TextStyle {
     return remember {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(560),
-                        FontVariation.width(122f),
-                        FontVariation.grade(40),
-                        FontVariation.Setting("ROND", 100f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(560),
+            fontFamily = MontserratFamily,
+            fontWeight = FontWeight.Bold,
             fontSize = 34.sp,
             lineHeight = 38.sp,
             letterSpacing = (-0.4).sp

@@ -10,12 +10,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import com.akr.finalapp.data.preferences.UserPreferencesRepository
+import com.akr.finalapp.data.model.SavedYoutubePlaylist
 import javax.inject.Inject
 
 @HiltViewModel
 class YoutubeViewModel @Inject constructor(
-    private val youtubeRepository: YoutubeRepository
+    private val youtubeRepository: YoutubeRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
+    val savedPlaylists = userPreferencesRepository.savedYoutubePlaylistsFlow
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
@@ -86,7 +94,28 @@ class YoutubeViewModel @Inject constructor(
         }
     }
 
-    fun extractPlaylistId(url: String): String? {
-        return Regex("[?&]list=([A-Za-z0-9_-]+)").find(url)?.groupValues?.get(1)
+    fun extractPlaylistId(input: String): String? {
+        val trimmed = input.trim()
+        if (trimmed.isEmpty()) return null
+        val fromUrl = Regex("[?&]list=([A-Za-z0-9_-]+)").find(trimmed)?.groupValues?.get(1)
+        if (fromUrl != null) return fromUrl
+        if (!trimmed.contains("/") && !trimmed.contains(".") && trimmed.length >= 10 && trimmed.all { it.isLetterOrDigit() || it == '_' || it == '-' }) {
+            return trimmed
+        }
+        return null
+    }
+
+    fun savePlaylist(id: String, name: String, url: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.saveYoutubePlaylist(
+                SavedYoutubePlaylist(id = id, name = name, url = url)
+            )
+        }
+    }
+
+    fun removeSavedPlaylist(playlistId: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.removeSavedYoutubePlaylist(playlistId)
+        }
     }
 }

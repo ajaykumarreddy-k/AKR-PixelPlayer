@@ -43,6 +43,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.akr.finalapp.ui.theme.MontserratFamily
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -602,29 +603,13 @@ private fun ExpressiveDailyMixHeader(
     Trace.endSection()
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberDailyMixTitleStyle(): TextStyle {
     return remember {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(436),
-                        FontVariation.width(102f),
-                        //FontVariation.grade(40),
-                        FontVariation.Setting("ROND", 100f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(760),
-            fontSize = 44.sp,
-            //lineHeight = 62.sp,
-//            letterSpacing = (-0.4).sp
+            fontFamily = MontserratFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 44.sp
         )
     }
 }

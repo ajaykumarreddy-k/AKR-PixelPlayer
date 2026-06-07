@@ -12,6 +12,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.PlaylistPlay
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +49,7 @@ fun YoutubeSearchScreen(
     val isSearching by youtubeViewModel.isSearching.collectAsStateWithLifecycle()
     val errorMessage by youtubeViewModel.errorMessage.collectAsStateWithLifecycle()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
+    val savedPlaylists by youtubeViewModel.savedPlaylists.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
 
@@ -56,7 +60,11 @@ fun YoutubeSearchScreen(
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 24.dp, top = 24.dp, end = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(
+                    start = 24.dp, 
+                    top = paddingValues.calculateTopPadding() + 24.dp, 
+                    end = 24.dp
+                ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val inputColors = SearchBarDefaults.inputFieldColors(
@@ -116,7 +124,7 @@ fun YoutubeSearchScreen(
                 when {
                     isSearching -> CircularProgressIndicator(Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)
                     !errorMessage.isNullOrEmpty() -> Text(errorMessage ?: "", color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center).padding(16.dp), textAlign = TextAlign.Center)
-                    searchResults.isEmpty() && searchQuery.isNotBlank() -> Text("No results found.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.Center))
+                    searchResults.isEmpty() -> Text("Type your text and press Go.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.Center))
                     else -> LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(top = 8.dp, bottom = paddingValues.calculateBottomPadding() + MiniPlayerHeight + 16.dp, start = 16.dp, end = 16.dp)
@@ -159,18 +167,86 @@ fun YoutubeSearchScreen(
                 onDismissRequest = { showPlaylistDialog = false; playlistUrlError = false },
                 title = { Text("Open YT Music Playlist") },
                 text = {
-                    Column {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
                         OutlinedTextField(
                             value = playlistUrlInput,
                             onValueChange = { playlistUrlInput = it; playlistUrlError = false },
-                            label = { Text("Paste playlist URL") },
+                            label = { Text("Paste playlist URL or ID") },
                             isError = playlistUrlError,
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                         if (playlistUrlError) {
-                            Text("Invalid URL", color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                text = "Invalid URL or ID",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                        
+                        if (savedPlaylists.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Saved Playlists",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 200.dp)
+                            ) {
+                                items(savedPlaylists) { playlist ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable {
+                                                showPlaylistDialog = false
+                                                playlistUrlInput = ""
+                                                navController.navigate("youtube_playlist/${playlist.id}")
+                                            }
+                                            .padding(vertical = 8.dp, horizontal = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = playlist.name,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = playlist.id,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                youtubeViewModel.removeSavedPlaylist(playlist.id)
+                                            },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Delete,
+                                                contentDescription = "Delete Playlist",
+                                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 },

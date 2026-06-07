@@ -49,7 +49,6 @@ import com.akr.finalapp.presentation.theme.surfaceContainerColor
  * Categories are hardcoded (no network request needed) — the user navigates
  * deeper to load actual library content from the phone.
  */
-@OptIn(ExperimentalTextApi::class)
 @Composable
 fun BrowseScreen(
     onCategoryClick: (browseType: String, title: String) -> Unit,
@@ -57,21 +56,7 @@ fun BrowseScreen(
     val columnState = rememberResponsiveColumnState()
     val palette = LocalWearPalette.current
     val background = palette.screenBackgroundColor()
-    val libraryTitleFont = remember {
-        FontFamily(
-            Font(
-                resId = R.font.gflex_variable,
-                variationSettings = FontVariation.Settings(
-                    FontVariation.weight(650),
-                    FontVariation.width(146f),
-                    FontVariation.Setting("ROND", 56f),
-                    FontVariation.Setting("XTRA", 520f),
-                    FontVariation.Setting("YOPQ", 90f),
-                    FontVariation.Setting("YTLC", 505f),
-                ),
-            ),
-        )
-    }
+    val libraryTitleFont = remember { FontFamily.SansSerif }
 
     Box(
         modifier = Modifier

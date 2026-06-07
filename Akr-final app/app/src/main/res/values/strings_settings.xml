@@ -388,7 +388,7 @@
         name="setcat_trigger_crash_subtitle"
     >Simulate a crash to test the crash reporting system.</string>
     <string name="setcat_application">Application</string>
-    <string name="setcat_about_pixelplayer_title">About PixelPlayer</string>
+    <string name="setcat_about_pixelplayer_title">About AKR - Pixelplayer</string>
     <string
         name="setcat_about_pixelplayer_subtitle"
     >App version, credits, and more.</string>
@@ -475,7 +475,7 @@
     <string
         name="toast_stats_regeneration_started"
     >Stats regeneration started</string>
-    <string name="backup_file_name_format">PixelPlayer_Backup_%1$d.pxpl</string>
+    <string name="backup_file_name_format">AKR-Pixelplayer_Backup_%1$d.pxpl</string>
 
     <string
         name="setcat_regenerate_daily_mix_action"

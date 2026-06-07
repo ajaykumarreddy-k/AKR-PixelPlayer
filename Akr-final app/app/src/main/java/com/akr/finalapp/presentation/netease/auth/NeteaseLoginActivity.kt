@@ -484,25 +484,12 @@ fun NeteaseWebLoginScreen(
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberNeteaseLoginTitleStyle(): TextStyle {
     return remember {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(620),
-                        FontVariation.width(128f),
-                        FontVariation.Setting("ROND", 88f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(700),
+            fontFamily = GoogleSansRounded,
+            fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
             lineHeight = 28.sp,
             letterSpacing = (-0.2).sp

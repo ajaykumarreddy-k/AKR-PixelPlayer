@@ -62,51 +62,14 @@ val ExpTitleTypography = Typography(
     )
 )
 
-// Google Sans Flex variable font with rounded axis for Google Sans Rounded-like appearance.
-private const val GoogleSansFlexRond = 100f
+private val quicksand = GoogleFont("Quicksand")
 
-@OptIn(ExperimentalTextApi::class)
 val GoogleSansRounded = FontFamily(
-    androidx.compose.ui.text.font.Font(
-        resId = R.font.gflex_variable,
-        weight = FontWeight.Light,
-        variationSettings = FontVariation.Settings(
-            FontVariation.weight(FontWeight.Light.weight),
-            FontVariation.Setting("ROND", GoogleSansFlexRond)
-        )
-    ),
-    androidx.compose.ui.text.font.Font(
-        resId = R.font.gflex_variable,
-        weight = FontWeight.Normal,
-        variationSettings = FontVariation.Settings(
-            FontVariation.weight(FontWeight.Normal.weight),
-            FontVariation.Setting("ROND", GoogleSansFlexRond)
-        )
-    ),
-    androidx.compose.ui.text.font.Font(
-        resId = R.font.gflex_variable,
-        weight = FontWeight.Medium,
-        variationSettings = FontVariation.Settings(
-            FontVariation.weight(FontWeight.Medium.weight),
-            FontVariation.Setting("ROND", GoogleSansFlexRond)
-        )
-    ),
-    androidx.compose.ui.text.font.Font(
-        resId = R.font.gflex_variable,
-        weight = FontWeight.SemiBold,
-        variationSettings = FontVariation.Settings(
-            FontVariation.weight(FontWeight.SemiBold.weight),
-            FontVariation.Setting("ROND", GoogleSansFlexRond)
-        )
-    ),
-    androidx.compose.ui.text.font.Font(
-        resId = R.font.gflex_variable,
-        weight = FontWeight.Bold,
-        variationSettings = FontVariation.Settings(
-            FontVariation.weight(FontWeight.Bold.weight),
-            FontVariation.Setting("ROND", GoogleSansFlexRond)
-        )
-    ),
+    Font(googleFont = quicksand, fontProvider = provider, weight = FontWeight.Light),
+    Font(googleFont = quicksand, fontProvider = provider, weight = FontWeight.Normal),
+    Font(googleFont = quicksand, fontProvider = provider, weight = FontWeight.Medium),
+    Font(googleFont = quicksand, fontProvider = provider, weight = FontWeight.SemiBold),
+    Font(googleFont = quicksand, fontProvider = provider, weight = FontWeight.Bold),
 )
 
 // Tipografía - Usar fuentes amigables y modernas.

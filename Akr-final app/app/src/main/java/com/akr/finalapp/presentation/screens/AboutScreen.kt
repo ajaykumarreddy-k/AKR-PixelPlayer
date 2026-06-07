@@ -44,7 +44,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.CircularProgressIndicator
@@ -97,7 +96,6 @@ import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
 import com.akr.finalapp.R
-import com.akr.finalapp.data.github.GitHubContributorService
 import com.akr.finalapp.presentation.components.CollapsibleCommonTopBar
 import com.akr.finalapp.presentation.components.MiniPlayerHeight
 import com.akr.finalapp.presentation.components.SmartImage
@@ -106,7 +104,6 @@ import com.akr.finalapp.presentation.navigation.navigateSafely
 import com.akr.finalapp.presentation.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
-import timber.log.Timber
 import kotlin.math.roundToInt
 
 private data class Contributor(
@@ -123,53 +120,36 @@ private data class Contributor(
 )
 
 private val CoreMaintainer = Contributor(
-    id = "theovilardo",
-    displayName = "Theo Vilardo",
-    role = "Creator and maintainer",
-    detail = "Building PixelPlayer with direct community feedback.",
-    avatarUrl = "https://avatars.githubusercontent.com/u/26845343?v=4",
+    id = "ajaykumarreddy-k",
+    displayName = "AJAY KUMAR REDDY KRISHNAREDDY GARI",
+    role = "Maintainer",
+    detail = "A combined mod Of ECHO and Pixel player.",
+    avatarUrl = "https://github.com/ajaykumarreddy-k.png",
     iconRes = R.drawable.round_developer_board_24,
-    githubUrl = "https://github.com/theovilardo",
-    telegramUrl = "https://t.me/thevelopersupport",
+    githubUrl = "https://github.com/ajaykumarreddy-k",
+    telegramUrl = null,
 )
 
-private val PinnedCommunityMembers = listOf(
+private val SpecialThanksItems = listOf(
     Contributor(
-        id = "lostf1sh",
-        displayName = "@lostf1sh",
-        role = "Most active contributor",
-        detail = "Has contributed enormously across core features, architecture and reliability.",
-        badge = "Top Impact",
-        iconRes = R.drawable.rounded_celebration_24,
-        githubUrl = "https://github.com/lostf1sh",
+        id = "pixelplayer_thanks",
+        displayName = "PixelPlayer",
+        role = "Special Thanks",
+        detail = "AKR - Music is a by project of these 2 where a solo dev got inspired and made a new app ,, thank you.",
+        avatarUrl = "https://github.com/theovilardo.png",
+        iconRes = R.drawable.pixelplay_base_monochrome,
+        githubUrl = "https://github.com/theovilardo/PixelPlayer",
     ),
     Contributor(
-        id = "cromaguy",
-        displayName = "@cromaguy",
-        role = "Rhythm developer",
-        detail = "Developer of Rhythm (another music app) and key community supporter.",
-        badge = "Community Ally",
-        iconRes = R.drawable.round_developer_board_24,
-        githubUrl = "https://github.com/cromaguy",
-    ),
-    Contributor(
-        id = "colbycabrera",
-        displayName = "@ColbyCabrera",
-        role = "Early contributor",
-        detail = "Helped shape PixelPlayer in the first stages of the app.",
-        badge = "Early Support",
-        iconRes = R.drawable.round_newspaper_24,
-        githubUrl = "https://github.com/ColbyCabrera",
-    ),
+        id = "echomusic_thanks",
+        displayName = "Echo Music",
+        role = "Special Thanks",
+        detail = "AKR - Music is a by project of these 2 where a solo dev got inspired and made a new app ,, thank you.",
+        avatarUrl = "https://github.com/EchoMusicApp.png",
+        iconRes = R.drawable.ic_music_placeholder,
+        githubUrl = "https://github.com/EchoMusicApp/Echo-Music",
+    )
 )
-
-private val PinnedAliases = mapOf(
-    "cromaguy" to setOf("chroma"),
-)
-
-private fun normalizeHandle(handle: String): String {
-    return handle.trim().removePrefix("@").lowercase()
-}
 
 // AboutTopBar removed, replaced by CollapsibleCommonTopBar
 
@@ -187,74 +167,6 @@ fun AboutScreen(
         packageInfo.versionName ?: "N/A"
     } catch (_: Exception) {
         "N/A"
-    }
-
-    var contributors by remember { mutableStateOf<List<Contributor>>(emptyList()) }
-    var isLoadingContributors by remember { mutableStateOf(true) }
-    val githubService = remember { GitHubContributorService() }
-
-    LaunchedEffect(Unit) {
-        try {
-            val result = githubService.fetchContributors()
-            result.onSuccess { githubContributors ->
-                contributors = githubContributors
-                    .filter { normalizeHandle(it.login) != CoreMaintainer.id }
-                    .map { github ->
-                        Contributor(
-                            id = normalizeHandle(github.login),
-                            displayName = "@${github.login}",
-                            role = "Community contributor",
-                            avatarUrl = github.avatar_url,
-                            iconRes = R.drawable.rounded_person_24,
-                            githubUrl = github.html_url,
-                            contributions = github.contributions,
-                        )
-                    }
-            }
-            result.onFailure { exception ->
-                Timber.e(exception, "Failed to fetch contributors from GitHub")
-                contributors = emptyList()
-            }
-        } finally {
-            isLoadingContributors = false
-        }
-    }
-
-    val contributorsById = remember(contributors) {
-        contributors.associateBy { it.id }
-    }
-
-    val spotlightContributors = remember(contributorsById) {
-        PinnedCommunityMembers.map { pinned ->
-            val primaryMatch = contributorsById[pinned.id]
-            val aliasMatch = PinnedAliases[pinned.id]
-                ?.firstNotNullOfOrNull { alias -> contributorsById[alias] }
-            val match = primaryMatch ?: aliasMatch
-
-            if (match == null) {
-                pinned
-            } else {
-                pinned.copy(
-                    avatarUrl = match.avatarUrl ?: pinned.avatarUrl,
-                    contributions = match.contributions ?: pinned.contributions,
-                    githubUrl = match.githubUrl ?: pinned.githubUrl,
-                )
-            }
-        }
-    }
-
-    val excludedIds = remember(spotlightContributors) {
-        buildSet {
-            add(CoreMaintainer.id)
-            spotlightContributors.forEach { spotlight ->
-                add(spotlight.id)
-                addAll(PinnedAliases[spotlight.id].orEmpty())
-            }
-        }
-    }
-
-    val communityContributors = remember(contributors, excludedIds) {
-        contributors.filterNot { it.id in excludedIds }
     }
 
     val transitionState = remember { MutableTransitionState(false) }
@@ -394,83 +306,28 @@ fun AboutScreen(
                 )
             }
 
-            item(key = "spotlight_title") {
+            item(key = "special_thanks_title") {
                 AboutSectionHeader(
-                    title = stringResource(R.string.about_spotlight_title),
-                    subtitle = stringResource(R.string.about_spotlight_subtitle),
+                    title = stringResource(R.string.about_special_thanks_title),
+                    subtitle = stringResource(R.string.about_special_thanks_subtitle),
                     modifier = Modifier.padding(top = 24.dp),
                 )
             }
 
             itemsIndexed(
-                items = spotlightContributors,
-                key = { _, contributor -> "spotlight_${contributor.id}" },
+                items = SpecialThanksItems,
+                key = { _, contributor -> "thanks_${contributor.id}" },
             ) { index, contributor ->
                 ContributorCard(
                     contributor = contributor,
-                    shape = expressiveListShape(index = index, count = spotlightContributors.size),
+                    shape = expressiveListShape(index = index, count = SpecialThanksItems.size),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                         .padding(top = if (index == 0) 0.dp else 3.dp),
-                    showContributionCount = true,
+                    showContributionCount = false,
                     onCardClick = contributor.githubUrl?.let { url -> { openUrl(context, url) } },
                 )
-            }
-
-            item(key = "contributors_title") {
-                AboutSectionHeader(
-                    title = stringResource(R.string.about_contributors_section_title),
-                    subtitle = stringResource(R.string.about_contributors_section_subtitle),
-                    modifier = Modifier.padding(top = 24.dp),
-                )
-            }
-
-            if (isLoadingContributors) {
-                item(key = "contributors_loading") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 28.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-            } else if (communityContributors.isEmpty()) {
-                item(key = "contributors_empty") {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        shape = expressiveListShape(index = 0, count = 1),
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        tonalElevation = 1.dp,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.about_no_contributors),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            } else {
-                itemsIndexed(
-                    items = communityContributors,
-                    key = { _, contributor -> "contributor_${contributor.id}" },
-                ) { index, contributor ->
-                    ContributorCard(
-                        contributor = contributor,
-                        shape = expressiveListShape(index = index, count = communityContributors.size),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(top = if (index == 0) 0.dp else 3.dp),
-                        showContributionCount = true,
-                        onCardClick = contributor.githubUrl?.let { url -> { openUrl(context, url) } },
-                    )
-                }
             }
 
             item(key = "bottom_spacer") {
@@ -588,7 +445,6 @@ private fun AboutHeroCard(
 private fun CommunitySignalsRow() {
     val labels = listOf(
         stringResource(R.string.about_signal_open_source) to Icons.Rounded.Public,
-        stringResource(R.string.about_signal_community_first) to Icons.Rounded.AutoAwesome,
         stringResource(R.string.about_signal_material3) to Icons.Rounded.Palette,
     )
 
@@ -718,7 +574,7 @@ private fun ContributorCard(
                         text = detail,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
+                        maxLines = 4,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(top = 4.dp),
                     )

@@ -93,7 +93,7 @@ class AiSystemPromptEngine @Inject constructor() {
             """.trimIndent()
 
             AiSystemPromptType.GENERAL -> """
-                <role>PixelPlayer Assistant</role>
+                <role>AKR - Pixelplayer Assistant</role>
                 <strategy>
                 Assist the user with any complex queries or actions inside their music ecosystem.
                 </strategy>
