@@ -800,13 +800,7 @@ class DualPlayerEngine @Inject constructor(
     }
 
     private fun shouldDisableAudioOffloadByDefault(): Boolean {
-        return shouldDisableAudioOffloadByDefaultForDevice(
-            manufacturer = Build.MANUFACTURER,
-            brand = Build.BRAND,
-            model = Build.MODEL,
-            hardware = Build.HARDWARE,
-            sdkInt = Build.VERSION.SDK_INT
-        )
+        return true
     }
 
     private fun disableAudioOffloadForSession(reason: String) {
@@ -1044,6 +1038,15 @@ class DualPlayerEngine @Inject constructor(
         }
         hiFiModeEnabled = enabled
         rebuildPlayersPreservingMasterState("Hi-Fi mode set to $enabled")
+    }
+
+    fun clearResolvedUri(uriString: String) {
+        resolvedUriCache.remove(uriString)
+        Timber.tag("DualPlayerEngine").d("clearResolvedUri: Evicted %s from resolved cache", uriString)
+    }
+
+    fun blacklistVideoId(videoId: String) {
+        youtubeRepository.blacklistVideoId(videoId)
     }
 
     suspend fun resolveCloudUri(uri: Uri, mediaItem: MediaItem? = null): Uri = withContext(Dispatchers.IO) {

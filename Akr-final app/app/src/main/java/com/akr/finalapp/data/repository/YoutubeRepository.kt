@@ -51,6 +51,17 @@ class YoutubeRepository @Inject constructor() {
         }
     }
 
+    private val blacklistedVideoIds = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
+    fun blacklistVideoId(videoId: String) {
+        blacklistedVideoIds.add(videoId)
+        android.util.Log.w("AKR_MUSIC", "🚫 Blacklisted videoId=$videoId to force Strategy 3 fallback search on retry")
+    }
+
+    fun isBlacklisted(videoId: String): Boolean {
+        return blacklistedVideoIds.contains(videoId)
+    }
+
     suspend fun resolveStreamUrl(
         videoId: String,
         songTitle: String? = null,
@@ -70,8 +81,11 @@ class YoutubeRepository @Inject constructor() {
             var author = songArtist
 
             // Validate if the videoId actually matches the requested songTitle
-            var isVideoIdValid = true
-            if (!isFallback && !title.isNullOrBlank()) {
+            var isVideoIdValid = videoId.length == 11 && !isBlacklisted(videoId)
+            if (isBlacklisted(videoId)) {
+                android.util.Log.w("AKR_MUSIC", "⚠️ Video ID $videoId is blacklisted. Skipping Strategy 1 & 2 to force search fallback.")
+            }
+            if (isVideoIdValid && !isFallback && !title.isNullOrBlank()) {
                 val mediaInfo = YouTube.getMediaInfo(videoId).getOrNull()
                 if (mediaInfo != null) {
                     val videoTitle = mediaInfo.title

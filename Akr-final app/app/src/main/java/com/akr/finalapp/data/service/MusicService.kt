@@ -231,6 +231,8 @@ class MusicService : MediaLibraryService() {
     private var lastNoisyPauseRealtimeMs = 0L
     private var resumeOnHeadsetReconnectEnabled = false
     private var temporaryForegroundStartedInOnCreate = false
+    private var fallbackRetryCount = 0
+    private var lastFailedMediaId: String? = null
 
     companion object {
         private const val TAG = "MusicService_PixelPlay"
@@ -1422,6 +1424,38 @@ class MusicService : MediaLibraryService() {
 
         override fun onPlayerError(error: PlaybackException) {
             Timber.tag(TAG).e(error, "Error en el reproductor: ")
+            val player = mediaSession?.player ?: return
+            val currentItem = player.currentMediaItem
+            if (currentItem != null) {
+                val mediaId = currentItem.mediaId
+                if (mediaId.length == 11) {
+                    if (mediaId == lastFailedMediaId) {
+                        fallbackRetryCount++
+                    } else {
+                        lastFailedMediaId = mediaId
+                        fallbackRetryCount = 1
+                    }
+
+                    if (fallbackRetryCount <= 2) {
+                        android.util.Log.w("AKR_MUSIC", "⚠️ Playback failed for YouTube videoId=$mediaId (retry $fallbackRetryCount/2). Evicting, blacklisting, and retrying...")
+                        engine.blacklistVideoId(mediaId)
+                        engine.clearResolvedUri("youtube://$mediaId")
+                        
+                        val currentPosition = player.currentPosition
+                        player.prepare()
+                        player.seekTo(currentPosition)
+                        player.play()
+                    } else {
+                        android.util.Log.e("AKR_MUSIC", "❌ Playback failed repeatedly for YouTube videoId=$mediaId. Skipping to next track.")
+                        fallbackRetryCount = 0
+                        lastFailedMediaId = null
+                        if (player.hasNextMediaItem()) {
+                            player.seekToNext()
+                            player.play()
+                        }
+                    }
+                }
+            }
         }
     }
 

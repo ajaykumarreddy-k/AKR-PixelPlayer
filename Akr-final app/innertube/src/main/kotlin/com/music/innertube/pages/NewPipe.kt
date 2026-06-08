@@ -109,8 +109,11 @@ class NewPipeUtils(
         videoId: String,
     ): String? =
         try {
-            val url =
-                format.url ?: (format.signatureCipher ?: format.cipher)?.let { signatureCipher ->
+            if (format.url != null) {
+                format.url
+            } else {
+                val signatureCipher = format.signatureCipher ?: format.cipher
+                if (signatureCipher != null) {
                     val params = parseQueryString(signatureCipher)
                     val obfuscatedSignature =
                         params["s"]
@@ -126,13 +129,19 @@ class NewPipeUtils(
                             videoId,
                             obfuscatedSignature,
                         )
-                    url.toString()
-                } ?: throw ParsingException("Could not find format url")
-
-            YoutubeJavaScriptPlayerManager.getUrlWithThrottlingParameterDeobfuscated(
-                videoId,
-                url,
-            )
+                    val decryptedUrl = url.toString()
+                    try {
+                        YoutubeJavaScriptPlayerManager.getUrlWithThrottlingParameterDeobfuscated(
+                            videoId,
+                            decryptedUrl,
+                        )
+                    } catch (e: Exception) {
+                        decryptedUrl
+                    }
+                } else {
+                    throw ParsingException("Could not find format url or cipher")
+                }
+            }
         } catch (e: Exception) {
             // Don't print stack trace - caller handles errors
             null
@@ -180,13 +189,7 @@ object NewPipeExtractor {
             streamsList.mapNotNull { stream ->
                 val itag = stream.itagItem?.id ?: return@mapNotNull null
                 val rawUrl = stream.content ?: return@mapNotNull null
-                val deobfuscatedUrl = try {
-                    YoutubeJavaScriptPlayerManager.getUrlWithThrottlingParameterDeobfuscated(videoId, rawUrl)
-                } catch (e: Exception) {
-                    android.util.Log.e("AKR_MUSIC", "Failed to deobfuscate throttling parameter for itag=$itag", e)
-                    rawUrl
-                }
-                itag to deobfuscatedUrl
+                itag to rawUrl
             }
         } catch (e: Exception) {
             android.util.Log.e("AKR_MUSIC", "❌ newPipePlayer error for videoId=$videoId", e)
