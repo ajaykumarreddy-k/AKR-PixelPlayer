@@ -1,0 +1,8 @@
+{
+  "name": "AKR PixelPlayer",
+  "description": "A landing page for the AKR PixelPlayer Android and Wear OS music companion application.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

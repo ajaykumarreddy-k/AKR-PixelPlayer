@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500&family=Titan+One&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary-bg: #0b0f19;
+  --color-secondary: #f3efea;
+  --color-accent: #ffffff;
+  --font-sans: "Google Sans", "Product Sans", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-titan: "Titan One", display, sans-serif;
+  --font-serif-italic: "Playfair Display", serif;
+  --font-inter: "Inter", sans-serif;
+
+  --animate-marquee: marquee 25s linear infinite;
+  --animate-marquee-slow: marquee 35s linear infinite;
+  --animate-blob: blob-float 15s infinite alternate ease-in-out;
+}
+
+/* Custom Font Utilities for Footer Replica */
+.font-titan {
+  font-family: "Titan One", display, sans-serif;
+}
+.font-serif-italic {
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+}
+.font-inter {
+  font-family: "Inter", sans-serif;
+}
+
+.giant-text-container {
+  font-size: clamp(3rem, 12.8vw, 15rem);
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+body {
+  background-color: var(--color-primary-bg);
+  color: var(--color-secondary);
+  font-family: var(--font-sans);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6), 0 0 20px 2px rgba(255, 255, 255, 0.05);
+}
+
+/* Premium styled elements */
+.btn-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* 3D and shadow text styling */
+.text-glow {
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes blob-float {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+
+  50% {
+    transform: translate(3%, 3%) scale(1.02) rotate(5deg);
+  }
+
+  100% {
+    transform: translate(-3%, 3%) scale(0.98) rotate(-3deg);
+  }
+}
+
+/* ==========================================================================
+   Scroll-Driven Animations & Custom Transitions
+   ========================================================================== */
+
+/* Timeline scope setup on the body/root to coordinate scroll-linked states */
+body {
+  timeline-scope: --about-s, --features-s, --playlists-s, --details-s, --stack-s, --creator-s, --thanks-s;
+}
+
+/* Map CSS variables defined in React inline style to actual view timelines */
+#about,
+#features,
+#playlists,
+#about-details,
+#stack,
+#creator,
+#thanks {
+  view-timeline-name: var(--timeline);
+  view-timeline-axis: block;
+}
+
+/* Reading progress bar */
+.read-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 99;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(to right,
+      #ff0055,
+      #1db954,
+      #fa243c,
+      #00b2f3,
+      #8b5cf6);
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: scroll-progress both linear;
+  animation-timeline: scroll(root);
+}
+
+@keyframes scroll-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Sticky Header Scroll Height Shrink & Blur */
+header.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  background-color: rgba(11, 15, 25, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+  animation: header-shrink both linear;
+  animation-timeline: scroll();
+  animation-range: 0 15vh;
+}
+
+@keyframes header-shrink {
+  to {
+    padding-block: 0.75rem;
+    background-color: rgba(11, 15, 25, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Active Navigation Link Highlighting */
+.nav-link {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.55);
+  transition: color 0.25s ease, opacity 0.25s ease;
+  animation: active-link both linear;
+  anchor-name: var(--an);
+  animation-timeline: var(--at);
+}
+
+@keyframes active-link {
+
+  0%,
+  100% {
+    color: rgba(255, 255, 255, 0.55);
+    opacity: 0.55;
+  }
+
+  50% {
+    color: #ffffff;
+    opacity: 1;
+  }
+}
+
+/* Scroll-driven text reveal */
+.scroll-reveal {
+  animation: fade-in-up both linear;
+  animation-timeline: view();
+  animation-range: entry 5% cover 30%;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
