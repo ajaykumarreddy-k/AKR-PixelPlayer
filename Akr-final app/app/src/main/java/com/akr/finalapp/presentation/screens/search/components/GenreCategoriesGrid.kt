@@ -63,11 +63,16 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 fun GenreCategoriesGrid(
     genres: List<Genre>,
     onGenreClick: (Genre) -> Unit,
+    onPlaylistClick: (com.akr.finalapp.data.model.Playlist) -> Unit = {},
+    onYoutubePlaylistClick: (com.akr.finalapp.data.model.SavedYoutubePlaylist) -> Unit = {},
     onYoutubeSearchClick: () -> Unit,
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
-    if (genres.isEmpty()) {
+    val userPlaylists by playerViewModel.userPlaylists.collectAsStateWithLifecycle()
+    val savedYoutubePlaylists by playerViewModel.savedYoutubePlaylists.collectAsStateWithLifecycle()
+
+    if (genres.isEmpty() && userPlaylists.isEmpty() && savedYoutubePlaylists.isEmpty()) {
         Box(
             modifier = modifier.fillMaxSize().padding(16.dp),
             contentAlignment = Alignment.Center
@@ -123,8 +128,6 @@ fun GenreCategoriesGrid(
                 )
                 
                 // Toggle Button with persistence and styling
-                // "Round to Square (12dp) when selected" logic:
-                // Assuming List View is the "Selected" / "Alternative" state.
                 val shape = androidx.compose.animation.core.animateFloatAsState(
                     targetValue = if (!isGridView) 12f else 50f, // 12dp for List, 50% (Circle) for Grid
                     label = "shapeAnimation"
@@ -138,7 +141,7 @@ fun GenreCategoriesGrid(
                     ),
                     shape = RoundedCornerShape(shape.value.dp)
                 ) {
-                androidx.compose.material3.Icon(
+                    androidx.compose.material3.Icon(
                         imageVector = if (isGridView) Icons.AutoMirrored.Rounded.ViewList else Icons.Rounded.GridView,
                         contentDescription = "Toggle Grid/List View"
                     )
@@ -151,6 +154,46 @@ fun GenreCategoriesGrid(
                 onClick = onYoutubeSearchClick,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
+        }
+
+        if (userPlaylists.isNotEmpty() || savedYoutubePlaylists.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    text = "Saved Playlists",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp, start = 4.dp)
+                )
+            }
+
+            items(userPlaylists, key = { "user_pl_${it.id}" }) { playlist ->
+                PlaylistGridCard(
+                    title = playlist.name,
+                    subtitle = "${playlist.songIds.size} songs",
+                    iconPainter = painterResource(R.drawable.rounded_play_circle_24),
+                    onClick = { onPlaylistClick(playlist) },
+                    isGridView = isGridView
+                )
+            }
+
+            items(savedYoutubePlaylists, key = { "yt_pl_${it.id}" }) { ytPlaylist ->
+                PlaylistGridCard(
+                    title = ytPlaylist.name,
+                    subtitle = "YouTube Playlist",
+                    iconPainter = painterResource(R.drawable.alt_video),
+                    onClick = { onYoutubePlaylistClick(ytPlaylist) },
+                    isGridView = isGridView
+                )
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    text = "Genres",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp, start = 4.dp)
+                )
+            }
         }
 
         items(genres, key = { it.id }) { genre ->
@@ -384,3 +427,88 @@ private fun GenreCard(
         }
     }
 }
+
+@Composable
+private fun PlaylistGridCard(
+    title: String,
+    subtitle: String,
+    iconPainter: androidx.compose.ui.graphics.painter.Painter,
+    onClick: () -> Unit,
+    isGridView: Boolean
+) {
+    val isDark = LocalPixelPlayDarkTheme.current
+    val shape = RoundedCornerShape(20.dp)
+    val containerColor = if (isDark) {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+    val contentColor = MaterialTheme.colorScheme.onSurface
+
+    val cardModifier = if (isGridView) {
+        Modifier.aspectRatio(1.2f)
+    } else {
+        Modifier.fillMaxWidth().height(90.dp)
+    }
+
+    Card(
+        modifier = cardModifier
+            .clip(shape)
+            .clickable(onClick = onClick),
+        shape = shape,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp)
+        ) {
+            androidx.compose.material3.Icon(
+                painter = iconPainter,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(70.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 12.dp, y = 12.dp)
+                    .alpha(0.15f),
+                tint = contentColor
+            )
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = contentColor,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = contentColor.copy(alpha = 0.7f),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+
+                androidx.compose.material3.Icon(
+                    painter = iconPainter,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.End),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+

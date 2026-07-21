@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -141,6 +142,7 @@ fun SearchScreen(
     paddingValues: PaddingValues,
     playerViewModel: PlayerViewModel = hiltViewModel(),
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
+    youtubeViewModel: com.akr.finalapp.presentation.viewmodel.YoutubeViewModel = hiltViewModel(),
     navController: NavHostController,
     onSearchBarActiveChange: (Boolean) -> Unit = {}
 ) {
@@ -166,6 +168,10 @@ fun SearchScreen(
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val favoriteSongIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
     val selectedSongForInfo by playerViewModel.selectedSongForInfo.collectAsStateWithLifecycle()
+    val ytSearchResults by youtubeViewModel.searchResults.collectAsStateWithLifecycle()
+    val ytIsSearching by youtubeViewModel.isSearching.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     var showSongInfoBottomSheet by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val searchInputFocusRequester = remember { FocusRequester() }
@@ -186,7 +192,15 @@ fun SearchScreen(
     LaunchedEffect(searchQuery, currentFilter) {
         playerViewModel.performSearch(searchQuery)
     }
+
+    // YouTube search fallback when local search yields no results
     val searchResults = searchUiState.searchResults
+    LaunchedEffect(searchQuery, searchResults.isEmpty()) {
+        if (searchQuery.isNotBlank() && searchResults.isEmpty()) {
+            youtubeViewModel.updateSearchQuery(searchQuery)
+            youtubeViewModel.search()
+        }
+    }
     val handleSongMoreOptionsClick: (Song) -> Unit = { song ->
         playerViewModel.selectSongForInfo(song)
         showSongInfoBottomSheet = true
@@ -369,6 +383,12 @@ fun SearchScreen(
                             val encodedGenreId = java.net.URLEncoder.encode(genre.id, "UTF-8")
                             navController.navigateSafely(Screen.GenreDetail.createRoute(encodedGenreId))
                         },
+                        onPlaylistClick = { playlist ->
+                            navController.navigateSafely(Screen.PlaylistDetail.createRoute(playlist.id))
+                        },
+                        onYoutubePlaylistClick = { ytPlaylist ->
+                            navController.navigateSafely(Screen.YoutubePlaylist.createRoute(ytPlaylist.id))
+                        },
                         onYoutubeSearchClick = {
                             navController.navigateToTopLevelSafely(Screen.YoutubeSearch.createRoute(null))
                         },
@@ -400,10 +420,68 @@ fun SearchScreen(
                             label = "search_results_fade"
                         ) { isEmpty ->
                             if (isEmpty) {
-                                EmptySearchResults(
-                                    searchQuery = searchQuery,
-                                    colorScheme = colorScheme
-                                )
+                                if (ytIsSearching) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text(
+                                                text = "Searching YouTube Music...",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onBackground
+                                            )
+                                        }
+                                    }
+                                } else if (ytSearchResults.isNotEmpty()) {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp)
+                                    ) {
+                                        item {
+                                            Text(
+                                                text = "No local results — YouTube Music Results:",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+                                            )
+                                        }
+                                        items(ytSearchResults, key = { "yt_song_${it.id}" }) { song ->
+                                            Box(modifier = Modifier.padding(bottom = 8.dp)) {
+                                                EnhancedSongListItem(
+                                                    song = song,
+                                                    isPlaying = stablePlayerState.isPlaying && stablePlayerState.currentSong?.id == song.id,
+                                                    isCurrentSong = stablePlayerState.currentSong?.id == song.id,
+                                                    onClick = {
+                                                        android.widget.Toast.makeText(context, "Connecting to YouTube...", android.widget.Toast.LENGTH_SHORT).show()
+                                                        youtubeViewModel.resolveStreamUrl(song,
+                                                            onResolved = { url ->
+                                                                val updatedQueue = ytSearchResults.map { s ->
+                                                                    if (s.id == song.id) s.copy(contentUriString = url) else s
+                                                                }
+                                                                playerViewModel.playSongs(updatedQueue, song.copy(contentUriString = url), "YouTube Search", null)
+                                                            },
+                                                            onError = { err ->
+                                                                android.widget.Toast.makeText(context, "Error: $err", android.widget.Toast.LENGTH_LONG).show()
+                                                            }
+                                                        )
+                                                    },
+                                                    onMoreOptionsClick = { handleSongMoreOptionsClick(song) }
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    EmptySearchResults(
+                                        searchQuery = searchQuery,
+                                        colorScheme = colorScheme
+                                    )
+                                }
                             } else {
                                 SearchResultsList(
                                     results = searchResults,

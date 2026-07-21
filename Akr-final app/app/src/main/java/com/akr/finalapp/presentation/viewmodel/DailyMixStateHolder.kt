@@ -4,6 +4,7 @@ import com.akr.finalapp.data.DailyMixManager
 import com.akr.finalapp.data.model.Song
 import com.akr.finalapp.data.preferences.UserPreferencesRepository
 import com.akr.finalapp.data.repository.MusicRepository
+import com.akr.finalapp.data.repository.YoutubeRepository
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -36,7 +37,8 @@ import javax.inject.Singleton
 class DailyMixStateHolder @Inject constructor(
     private val dailyMixManager: DailyMixManager,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val musicRepository: MusicRepository
+    private val musicRepository: MusicRepository,
+    private val youtubeRepository: YoutubeRepository
 ) {
     private var scope: CoroutineScope? = null
     private var updateJob: Job? = null
@@ -48,10 +50,88 @@ class DailyMixStateHolder @Inject constructor(
     val yourMixSongs: StateFlow<ImmutableList<Song>> = _yourMixSongs.asStateFlow()
 
     /**
-     * Initialize with coroutine scope from ViewModel.
+     * Attach a CoroutineScope (typically PlayerViewModel's viewModelScope).
      */
     fun initialize(coroutineScope: CoroutineScope) {
-        scope = coroutineScope
+        this.scope = coroutineScope
+    }
+
+    fun attachScope(coroutineScope: CoroutineScope) {
+        this.scope = coroutineScope
+    }
+
+    /**
+     * Generate or update the daily mix and your mix.
+     */
+    fun updateDailyMix(favoriteSongIdsFlow: kotlinx.coroutines.flow.Flow<Set<String>>) {
+        updateJob?.cancel()
+        updateJob = scope?.launch(Dispatchers.IO) {
+            val allSongs = musicRepository.getAllSongsOnce()
+            val favoriteIds = favoriteSongIdsFlow.first()
+            val savedPlaylists = userPreferencesRepository.savedYoutubePlaylistsFlow.first()
+
+            // 1. Gather songs from saved playlists
+            val playlistSongs = mutableListOf<Song>()
+            if (savedPlaylists.isNotEmpty()) {
+                for (p in savedPlaylists) {
+                    val res = if (p.id.startsWith("spotify_")) {
+                        youtubeRepository.getSpotifyPlaylist(p.id.removePrefix("spotify_")).getOrNull()
+                    } else {
+                        youtubeRepository.getPlaylist(p.id).getOrNull()
+                    }
+                    if (res != null && res.second.isNotEmpty()) {
+                        playlistSongs.addAll(res.second)
+                    }
+                }
+            }
+
+            // 2. Fetch trending songs if online
+            val trendingSongs = try {
+                youtubeRepository.searchSongs("Top songs of the day").getOrDefault(emptyList())
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            // 3. User Rule for "Your Mix":
+            // - No playlists added -> pick from trending
+            // - Playlists added, no trending -> pick from playlists
+            // - Both exist -> mix from BOTH!
+            val yourMixResult: List<Song> = when {
+                playlistSongs.isEmpty() && trendingSongs.isNotEmpty() -> {
+                    trendingSongs.shuffled().take(60)
+                }
+                playlistSongs.isNotEmpty() && trendingSongs.isEmpty() -> {
+                    playlistSongs.shuffled().take(60)
+                }
+                playlistSongs.isNotEmpty() && trendingSongs.isNotEmpty() -> {
+                    val combined = mutableListOf<Song>()
+                    val pIter = playlistSongs.shuffled().iterator()
+                    val tIter = trendingSongs.shuffled().iterator()
+                    while ((pIter.hasNext() || tIter.hasNext()) && combined.size < 60) {
+                        if (pIter.hasNext()) combined.add(pIter.next())
+                        if (tIter.hasNext() && combined.size < 60) combined.add(tIter.next())
+                    }
+                    combined
+                }
+                else -> {
+                    if (allSongs.isNotEmpty()) {
+                        dailyMixManager.generateYourMix(allSongs, favoriteIds)
+                    } else {
+                        emptyList()
+                    }
+                }
+            }
+
+            _yourMixSongs.value = yourMixResult.toImmutableList()
+            userPreferencesRepository.saveYourMixSongIds(yourMixResult.map { it.id })
+
+            val baseForDailyMix = if (allSongs.isNotEmpty()) allSongs else yourMixResult
+            if (baseForDailyMix.isNotEmpty()) {
+                val mix = dailyMixManager.generateDailyMix(baseForDailyMix, favoriteIds)
+                _dailyMixSongs.value = mix.toImmutableList()
+                userPreferencesRepository.saveDailyMixSongIds(mix.map { it.id })
+            }
+        }
     }
 
     /**
@@ -60,32 +140,6 @@ class DailyMixStateHolder @Inject constructor(
     fun removeFromDailyMix(songId: String) {
         _dailyMixSongs.update { currentList ->
             currentList.filterNot { it.id == songId }.toImmutableList()
-        }
-    }
-
-    /**
-     * Update the daily mix with new songs.
-     * Uses getAllSongsOnce() to load songs on-demand instead of keeping a permanent subscription.
-     */
-    fun updateDailyMix(favoriteSongIdsFlow: kotlinx.coroutines.flow.Flow<Set<String>>) {
-        updateJob?.cancel()
-        updateJob = scope?.launch(Dispatchers.IO) {
-            val allSongs = musicRepository.getAllSongsOnce()
-            if (allSongs.isNotEmpty()) {
-                val favoriteIds = favoriteSongIdsFlow.first()
-
-                // Generate daily mix
-                val mix = dailyMixManager.generateDailyMix(allSongs, favoriteIds)
-                _dailyMixSongs.value = mix.toImmutableList()
-                userPreferencesRepository.saveDailyMixSongIds(mix.map { it.id })
-
-                // Generate your mix
-                val yourMix = dailyMixManager.generateYourMix(allSongs, favoriteIds)
-                _yourMixSongs.value = yourMix.toImmutableList()
-                userPreferencesRepository.saveYourMixSongIds(yourMix.map { it.id })
-            } else {
-                _yourMixSongs.value = persistentListOf()
-            }
         }
     }
 

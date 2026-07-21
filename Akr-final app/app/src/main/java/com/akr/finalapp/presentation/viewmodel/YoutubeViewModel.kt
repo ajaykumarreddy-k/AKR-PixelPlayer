@@ -82,7 +82,12 @@ class YoutubeViewModel @Inject constructor(
 
     fun loadPlaylist(playlistId: String, onSuccess: (String, List<Song>) -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val result = youtubeRepository.getPlaylist(playlistId)
+            val result = if (playlistId.startsWith("spotify_")) {
+                val realSpotifyId = playlistId.removePrefix("spotify_")
+                youtubeRepository.getSpotifyPlaylist(realSpotifyId)
+            } else {
+                youtubeRepository.getPlaylist(playlistId)
+            }
             withContext(Dispatchers.Main) {
                 if (result.isSuccess) {
                     val pair = result.getOrThrow()
@@ -97,6 +102,13 @@ class YoutubeViewModel @Inject constructor(
     fun extractPlaylistId(input: String): String? {
         val trimmed = input.trim()
         if (trimmed.isEmpty()) return null
+
+        // Support Spotify playlist URLs and URIs
+        val spotifyMatch = Regex("""(?:spotify:playlist:|open\.spotify\.com/playlist/)([a-zA-Z0-9]+)""").find(trimmed)
+        if (spotifyMatch != null) {
+            return "spotify_" + spotifyMatch.groupValues[1]
+        }
+
         val fromUrl = Regex("[?&]list=([A-Za-z0-9_-]+)").find(trimmed)?.groupValues?.get(1)
         if (fromUrl != null) return fromUrl
         if (!trimmed.contains("/") && !trimmed.contains(".") && trimmed.length >= 10 && trimmed.all { it.isLetterOrDigit() || it == '_' || it == '-' }) {

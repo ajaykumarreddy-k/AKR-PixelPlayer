@@ -227,6 +227,7 @@ class PlayerViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val musicRepository: MusicRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val playlistPreferencesRepository: com.akr.finalapp.data.preferences.PlaylistPreferencesRepository,
     private val aiPreferencesRepository: AiPreferencesRepository,
     private val themePreferencesRepository: ThemePreferencesRepository,
     val syncManager: SyncManager, // Inyectar SyncManager
@@ -297,6 +298,12 @@ class PlayerViewModel @Inject constructor(
      */
     val currentPlaybackPosition: StateFlow<Long> = playbackStateHolder.currentPosition
     val playbackHistory = listeningStatsTracker.playbackHistory
+
+    val userPlaylists: StateFlow<List<com.akr.finalapp.data.model.Playlist>> = playlistPreferencesRepository.userPlaylistsFlow
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val savedYoutubePlaylists: StateFlow<List<com.akr.finalapp.data.model.SavedYoutubePlaylist>> = userPreferencesRepository.savedYoutubePlaylistsFlow
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Removed: _masterAllSongs was a duplicate of libraryStateHolder.allSongs
     // All reads now delegate to libraryStateHolder.allSongs

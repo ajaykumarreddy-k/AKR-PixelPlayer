@@ -1127,20 +1127,35 @@ class DualPlayerEngine @Inject constructor(
     }
 
     private suspend fun resolveYoutubeUriAsync(uri: Uri, mediaItem: MediaItem?): Uri? = withContext(Dispatchers.IO) {
-        val videoId = uri.host ?: return@withContext null
-        Timber.tag("DualPlayerEngine").d("resolveYoutubeUriAsync: videoId=%s", videoId)
+        val rawUriString = uri.toString()
+        var videoIdOrQuery = rawUriString.substringAfter("youtube://").removePrefix("//")
+        try {
+            videoIdOrQuery = java.net.URLDecoder.decode(videoIdOrQuery, "UTF-8")
+        } catch (e: Exception) {
+            // ignore decoding error
+        }
+        videoIdOrQuery = videoIdOrQuery.trim()
+        if (videoIdOrQuery.isBlank()) return@withContext null
+
+        Timber.tag("DualPlayerEngine").d("resolveYoutubeUriAsync: videoIdOrQuery=%s", videoIdOrQuery)
         var title = mediaItem?.mediaMetadata?.title?.toString()
         var artist = mediaItem?.mediaMetadata?.artist?.toString()
-        if (title.isNullOrBlank()) {
+
+        if (title.isNullOrBlank() || title == "youtube") {
+            title = videoIdOrQuery
             try {
-                val song = musicRepository.getSongsByIds(listOf(videoId)).first().firstOrNull()
-                title = song?.title
-                artist = song?.artist
+                if (videoIdOrQuery.length == 11) {
+                    val song = musicRepository.getSongsByIds(listOf(videoIdOrQuery)).first().firstOrNull()
+                    if (song != null) {
+                        title = song.title
+                        artist = song.artist
+                    }
+                }
             } catch (e: Exception) {
                 Timber.tag("DualPlayerEngine").w(e, "Failed to resolve metadata from database")
             }
         }
-        youtubeRepository.resolveStreamUrl(videoId, songTitle = title, songArtist = artist).getOrNull()?.toUri()
+        youtubeRepository.resolveStreamUrl(videoIdOrQuery, songTitle = title, songArtist = artist).getOrNull()?.toUri()
     }
 
     suspend fun resolveMediaItem(mediaItem: MediaItem): MediaItem {

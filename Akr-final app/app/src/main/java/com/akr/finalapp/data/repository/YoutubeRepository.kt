@@ -99,18 +99,21 @@ class YoutubeRepository @Inject constructor() {
                     }
                 }
             }
-
             if (title.isNullOrBlank()) {
-                try {
-                    val mediaInfo = YouTube.getMediaInfo(videoId).getOrNull()
-                    title = mediaInfo?.title
-                    author = mediaInfo?.author
-                } catch (e: Exception) {
-                    android.util.Log.e("AKR_MUSIC", "❌ getMediaInfo failed: ${e.message}")
+                if (videoId.startsWith("youtube://")) {
+                    title = videoId.removePrefix("youtube://")
+                } else if (videoId.length == 11) {
+                    try {
+                        val mediaInfo = YouTube.getMediaInfo(videoId).getOrNull()
+                        title = mediaInfo?.title
+                        author = mediaInfo?.author
+                    } catch (e: Exception) {
+                        android.util.Log.e("AKR_MUSIC", "❌ getMediaInfo failed: ${e.message}")
+                    }
                 }
             }
 
-            // Only try Strategy 1 and 2 if the videoId is valid
+            // Only try Strategy 1 and 2 if the videoId is valid (11 chars YouTube ID)
             if (isVideoIdValid) {
                 // Strategy 1: NewPipe direct page scrape — no API auth/PoToken needed.
                 // Uses NewPipe's own JS player extraction pipeline (same as NewPipe app).
@@ -186,16 +189,17 @@ class YoutubeRepository @Inject constructor() {
                     }
                 }
             } else {
-                android.util.Log.d("AKR_MUSIC", "🔄 Skipping Strategy 1 and Strategy 2 due to invalid original videoId.")
+                android.util.Log.d("AKR_MUSIC", "🔄 Skipping Strategy 1 and Strategy 2 due to non-YouTube videoId ($videoId).")
             }
 
             // Strategy 3 & 4: Search fallback for alternative video stream (only if not already a fallback request)
             if (!isFallback) {
-                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 3 & 4: Falling back to alternative video search for videoId=$videoId")
+                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 3 & 4: Falling back to alternative video search for videoId=$videoId (Title='$title', Author='$author')")
                 try {
-                    var title = songTitle
-                    var author = songArtist
-                    if (title.isNullOrBlank()) {
+                    if (title.isNullOrBlank() && videoId.startsWith("youtube://")) {
+                        title = videoId.removePrefix("youtube://")
+                    }
+                    if (title.isNullOrBlank() && videoId.length == 11) {
                         try {
                             val mediaInfo = YouTube.getMediaInfo(videoId).getOrNull()
                             title = mediaInfo?.title
@@ -214,7 +218,7 @@ class YoutubeRepository @Inject constructor() {
                         val scrapedId = withContext(Dispatchers.IO) { scrapeFirstVideoId(searchQuery) }
                         if (scrapedId != null && scrapedId != videoId) {
                             android.util.Log.d("AKR_MUSIC", "🔄 Trying scraped videoId=$scrapedId")
-                            val url = resolveStreamUrlInternal(scrapedId, null, null, isFallback = true).getOrNull()
+                            val url = resolveStreamUrlInternal(scrapedId, title, author, isFallback = true).getOrNull()
                             if (url != null) {
                                 android.util.Log.d("AKR_MUSIC", "✅ Scraper fallback succeeded: resolved stream URL for videoId=$scrapedId")
                                 return@runCatching url
@@ -230,7 +234,7 @@ class YoutubeRepository @Inject constructor() {
                         val videoResult = YouTube.search(searchQuery, YouTube.SearchFilter.FILTER_VIDEO).getOrNull()
                         val videoItems = videoResult?.items?.filterIsInstance<SongItem>() ?: emptyList()
                         
-                        // 2. Pick the first search result from SONG or VIDEO directly
+                        // Pick the first search result from SONG or VIDEO directly
                         android.util.Log.d("AKR_MUSIC", "🔄 Trying top search result directly...")
                         val topCandidates = (songItems.take(1) + videoItems.take(1)).distinctBy { it.id }
                         for (candidate in topCandidates) {
@@ -244,7 +248,7 @@ class YoutubeRepository @Inject constructor() {
                             }
                         }
 
-                        // 3. Fallback: Score all candidates using fuzzy matching if the first results failed to resolve
+                        // Fallback: Score all candidates using fuzzy matching
                         android.util.Log.d("AKR_MUSIC", "🔄 Falling back to scored candidate matching...")
                         val allCandidates = (songItems + videoItems).distinctBy { it.id }
                         val scoredCandidates = allCandidates.map { candidate ->
@@ -259,18 +263,18 @@ class YoutubeRepository @Inject constructor() {
                                 android.util.Log.d("AKR_MUSIC", "🔄 Trying candidate videoId=${candidate.id} (Title: ${candidate.title}, Score: $score)")
                                 val url = resolveStreamUrlInternal(candidate.id, candidate.title, candidate.artists.firstOrNull()?.name, isFallback = true).getOrNull()
                                 if (url != null) {
-                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 4 succeeded: resolved alternative videoId=${candidate.id} with score=$score")
+                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 4 succeeded: resolved candidate videoId=${candidate.id}")
                                     return@runCatching url
                                 }
                             }
                         }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("AKR_MUSIC", "❌ Strategy 3/4 fallback search failed: ${e.message}")
+                    android.util.Log.e("AKR_MUSIC", "❌ Strategy 3/4 failed: ${e.message}")
                 }
             }
 
-            throw Exception("All stream resolution strategies failed for videoId=$videoId")
+            throw Exception("Could not resolve stream URL for videoId=$videoId")
         }
     }
 
@@ -495,6 +499,230 @@ class YoutubeRepository @Inject constructor() {
             .replace(Regex("\\b(official|video|audio|lyric|lyrics|from|movie|song|full|hd|4k|lirical|lirik|clean|uncut)\\b"), "")
             .replace(Regex("\\s+"), " ")
             .trim()
+    }
+
+    suspend fun getSpotifyPlaylist(playlistId: String): Result<Pair<String, List<Song>>> = withContext(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("AKR_MUSIC", "🟢 Fetching Spotify playlist: $playlistId")
+
+            var playlistName = "Spotify Playlist"
+            var playlistCoverUrl: String? = null
+            val songsList = mutableListOf<Song>()
+
+            // 1. Obtain Spotify access token (try get_access_token endpoint, fallback to web page scraping)
+            var accessToken: String? = null
+            try {
+                val tokenUrl = java.net.URL("https://open.spotify.com/get_access_token?reason=transport&productType=web_player")
+                val tokenConn = tokenUrl.openConnection() as java.net.HttpURLConnection
+                tokenConn.requestMethod = "GET"
+                tokenConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                tokenConn.setRequestProperty("Accept", "application/json")
+                tokenConn.setRequestProperty("App-Platform", "WebPlayer")
+                tokenConn.connectTimeout = 8000
+                tokenConn.readTimeout = 8000
+
+                if (tokenConn.responseCode == 200) {
+                    val tokenJsonStr = tokenConn.inputStream.bufferedReader().use { it.readText() }
+                    val tokenObj = org.json.JSONObject(tokenJsonStr)
+                    accessToken = tokenObj.optString("accessToken", "")
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("AKR_MUSIC", "get_access_token direct request failed: ${e.message}")
+            }
+
+            // Fallback token extraction from desktop playlist HTML
+            if (accessToken.isNullOrBlank()) {
+                try {
+                    val pageUrl = java.net.URL("https://open.spotify.com/playlist/$playlistId")
+                    val pageConn = pageUrl.openConnection() as java.net.HttpURLConnection
+                    pageConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                    pageConn.connectTimeout = 8000
+                    pageConn.readTimeout = 8000
+
+                    val pageHtml = pageConn.inputStream.bufferedReader().use { it.readText() }
+                    val tokenMatch = Regex("""accessToken":"([^"]+)"""").find(pageHtml)
+                    if (tokenMatch != null) {
+                        accessToken = tokenMatch.groupValues[1]
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("AKR_MUSIC", "Playlist HTML token extraction failed: ${e.message}")
+                }
+            }
+
+            // 2. Fetch tracks using Spotify Web API with pagination (handles 400+ songs)
+            if (!accessToken.isNullOrBlank()) {
+                try {
+                    // Fetch playlist info (title & cover art)
+                    val detailsUrl = java.net.URL("https://api.spotify.com/v1/playlists/$playlistId?fields=name,images,tracks.total")
+                    val detailsConn = detailsUrl.openConnection() as java.net.HttpURLConnection
+                    detailsConn.setRequestProperty("Authorization", "Bearer $accessToken")
+                    detailsConn.setRequestProperty("User-Agent", "Mozilla/5.0")
+                    detailsConn.connectTimeout = 8000
+                    detailsConn.readTimeout = 8000
+
+                    if (detailsConn.responseCode == 200) {
+                        val detailsObj = org.json.JSONObject(detailsConn.inputStream.bufferedReader().use { it.readText() })
+                        playlistName = detailsObj.optString("name", "Spotify Playlist")
+                        val imagesArr = detailsObj.optJSONArray("images")
+                        if (imagesArr != null && imagesArr.length() > 0) {
+                            playlistCoverUrl = imagesArr.optJSONObject(0)?.optString("url")
+                        }
+
+                        val totalTracks = detailsObj.optJSONObject("tracks")?.optInt("total", 0) ?: 0
+                        android.util.Log.d("AKR_MUSIC", "📊 Playlist '$playlistName' has $totalTracks total tracks")
+
+                        var offset = 0
+                        while (offset < totalTracks) {
+                            val tracksUrl = java.net.URL("https://api.spotify.com/v1/playlists/$playlistId/tracks?offset=$offset&limit=100")
+                            val tracksConn = tracksUrl.openConnection() as java.net.HttpURLConnection
+                            tracksConn.setRequestProperty("Authorization", "Bearer $accessToken")
+                            tracksConn.setRequestProperty("User-Agent", "Mozilla/5.0")
+                            tracksConn.connectTimeout = 8000
+                            tracksConn.readTimeout = 8000
+
+                            if (tracksConn.responseCode == 200) {
+                                val tracksObj = org.json.JSONObject(tracksConn.inputStream.bufferedReader().use { it.readText() })
+                                val itemsArr = tracksObj.optJSONArray("items") ?: break
+                                if (itemsArr.length() == 0) break
+
+                                for (i in 0 until itemsArr.length()) {
+                                    val itemObj = itemsArr.optJSONObject(i) ?: continue
+                                    val trackObj = itemObj.optJSONObject("track") ?: continue
+                                    val trackTitle = trackObj.optString("name", "")
+                                    if (trackTitle.isBlank()) continue
+
+                                    val artistsArr = trackObj.optJSONArray("artists")
+                                    val artistList = mutableListOf<String>()
+                                    if (artistsArr != null) {
+                                        for (a in 0 until artistsArr.length()) {
+                                            val aName = artistsArr.optJSONObject(a)?.optString("name")
+                                            if (!aName.isNullOrBlank()) artistList.add(aName)
+                                        }
+                                    }
+                                    val trackArtist = if (artistList.isNotEmpty()) artistList.joinToString(", ") else "Unknown Artist"
+
+                                    // Extract unique track thumbnail / album cover
+                                    val albumObj = trackObj.optJSONObject("album")
+                                    val albumImages = albumObj?.optJSONArray("images")
+                                    val trackArtUrl = if (albumImages != null && albumImages.length() > 0) {
+                                        albumImages.optJSONObject(0)?.optString("url")
+                                    } else {
+                                        playlistCoverUrl
+                                    }
+
+                                    val trackId = trackObj.optString("id", "spotify_${playlistId}_${offset + i}")
+                                    val durationMs = trackObj.optLong("duration_ms", 180000L)
+
+                                    songsList.add(
+                                        Song(
+                                            id = trackId,
+                                            title = trackTitle,
+                                            artist = trackArtist,
+                                            artistId = 0L,
+                                            album = albumObj?.optString("name", playlistName) ?: playlistName,
+                                            albumId = 0L,
+                                            path = "",
+                                            contentUriString = "youtube://$trackArtist $trackTitle",
+                                            albumArtUriString = trackArtUrl ?: playlistCoverUrl,
+                                            duration = durationMs,
+                                            mimeType = "audio/youtube",
+                                            bitrate = null,
+                                            sampleRate = null,
+                                            dateModified = System.currentTimeMillis() / 1000L,
+                                            dateAdded = System.currentTimeMillis() / 1000L
+                                        )
+                                    )
+                                }
+                                offset += itemsArr.length()
+                            } else {
+                                break
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("AKR_MUSIC", "Spotify Web API pagination error: ${e.message}")
+                }
+            }
+
+            // 3. Fallback to Embed HTML scraper if Web API produced no tracks
+            if (songsList.isEmpty()) {
+                val url = java.net.URL("https://open.spotify.com/embed/playlist/$playlistId")
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+
+                val html = connection.inputStream.bufferedReader().use { it.readText() }
+
+                val jsonMatch = Regex("""<script id="__NEXT_DATA__" type="application/json">(.*?)</script>""").find(html)
+                if (jsonMatch != null) {
+                    val jsonStr = jsonMatch.groupValues[1]
+                    val jsonObject = org.json.JSONObject(jsonStr)
+                    val entity = jsonObject.optJSONObject("props")
+                        ?.optJSONObject("pageProps")
+                        ?.optJSONObject("state")
+                        ?.optJSONObject("data")
+                        ?.optJSONObject("entity")
+
+                    if (entity != null) {
+                        playlistName = entity.optString("name", "Spotify Playlist")
+                        val coverSources = entity.optJSONObject("coverArt")?.optJSONArray("sources")
+                        if (coverSources != null && coverSources.length() > 0) {
+                            playlistCoverUrl = coverSources.optJSONObject(0)?.optString("url")
+                        }
+
+                        val trackList = entity.optJSONArray("trackList")
+                        if (trackList != null) {
+                            for (i in 0 until trackList.length()) {
+                                val trackObj = trackList.optJSONObject(i) ?: continue
+                                val trackTitle = trackObj.optString("title", trackObj.optString("name", ""))
+                                val trackArtist = trackObj.optString("subtitle", trackObj.optString("artists", "Unknown Artist"))
+                                val duration = trackObj.optLong("duration", 180000L)
+
+                                val albumImages = trackObj.optJSONObject("album")?.optJSONArray("images")
+                                val trackArt = if (albumImages != null && albumImages.length() > 0) {
+                                    albumImages.optJSONObject(0)?.optString("url")
+                                } else {
+                                    trackObj.optString("coverArt", trackObj.optString("thumbnail", "")).ifBlank { playlistCoverUrl }
+                                }
+
+                                if (trackTitle.isNotBlank()) {
+                                    val rawUri = trackObj.optString("uri", "")
+                                    val trackId = if (rawUri.startsWith("spotify:track:")) rawUri.removePrefix("spotify:track:") else "spotify_${playlistId}_$i"
+                                    songsList.add(
+                                        Song(
+                                            id = trackId,
+                                            title = trackTitle,
+                                            artist = trackArtist,
+                                            artistId = 0L,
+                                            album = playlistName,
+                                            albumId = 0L,
+                                            path = "",
+                                            contentUriString = "youtube://$trackArtist $trackTitle",
+                                            albumArtUriString = if (!trackArt.isNullOrBlank()) trackArt else playlistCoverUrl,
+                                            duration = duration,
+                                            mimeType = "audio/youtube",
+                                            bitrate = null,
+                                            sampleRate = null,
+                                            dateModified = System.currentTimeMillis() / 1000L,
+                                            dateAdded = System.currentTimeMillis() / 1000L
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (songsList.isEmpty()) {
+                throw Exception("Could not parse tracks from Spotify playlist link.")
+            }
+
+            android.util.Log.d("AKR_MUSIC", "✅ Parsed Spotify playlist '$playlistName' with ${songsList.size} tracks")
+            Pair(playlistName, songsList)
+        }
     }
 
     private fun SongItem.toSong() = Song(
