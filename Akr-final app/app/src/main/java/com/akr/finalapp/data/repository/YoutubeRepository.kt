@@ -83,7 +83,7 @@ class YoutubeRepository @Inject constructor() {
             // Validate if the videoId actually matches the requested songTitle
             var isVideoIdValid = videoId.length == 11 && !isBlacklisted(videoId)
             if (isBlacklisted(videoId)) {
-                android.util.Log.w("AKR_MUSIC", "⚠️ Video ID $videoId is blacklisted. Skipping Strategy 1 & 2 to force search fallback.")
+                android.util.Log.w("AKR_MUSIC", "⚠️ Video ID $videoId is blacklisted.")
             }
             if (isVideoIdValid && !isFallback && !title.isNullOrBlank()) {
                 val mediaInfo = YouTube.getMediaInfo(videoId).getOrNull()
@@ -113,10 +113,13 @@ class YoutubeRepository @Inject constructor() {
                 }
             }
 
-            // Only try Strategy 1 and 2 if the videoId is valid (11 chars YouTube ID)
+            // =========================================================================
+            // STRATEGY 1 & 2: Direct Video ID Extraction
+            // If videoId is a valid 11-character YouTube ID, attempt direct extraction first
+            // =========================================================================
             if (isVideoIdValid) {
                 // Strategy 1: NewPipe direct page scrape — no API auth/PoToken needed.
-                // Uses NewPipe's own JS player extraction pipeline (same as NewPipe app).
+                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 1: Trying NewPipe direct page scrape for videoId=$videoId")
                 val newPipeStreams = try {
                     NewPipeExtractor.newPipePlayer(videoId)
                 } catch (e: Exception) {
@@ -132,13 +135,13 @@ class YoutubeRepository @Inject constructor() {
                         ?: newPipeStreams.firstOrNull()?.second
 
                     if (url != null) {
-                        android.util.Log.d("AKR_MUSIC", "✅ Strategy 1 (NewPipe) succeeded: ${url.take(80)}...")
+                        android.util.Log.d("AKR_MUSIC", "✅ Strategy 1 (NewPipe) succeeded for videoId=$videoId: ${url.take(80)}...")
                         return@runCatching url
                     }
                 }
 
-                // Strategy 2: Try various InnerTube clients + NewPipe cipher deobfuscation
-                android.util.Log.d("AKR_MUSIC", "🔄 Falling back to Strategy 2 (Multi-client InnerTube + cipher)")
+                // Strategy 2: Multi-client InnerTube clients + NewPipe cipher deobfuscation
+                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 2: Trying Multi-client InnerTube + cipher for videoId=$videoId")
                 val signatureTimestamp = NewPipeExtractor.getSignatureTimestamp(videoId).getOrNull()
                 android.util.Log.d("AKR_MUSIC", "📡 Strategy 2 signatureTimestamp=$signatureTimestamp")
 
@@ -161,16 +164,15 @@ class YoutubeRepository @Inject constructor() {
                     try {
                         android.util.Log.d("AKR_MUSIC", "🔄 Strategy 2: Trying client ${client.clientName} (${client.friendlyName ?: ""})")
                         val webResponse = YouTube.player(videoId, client = client, signatureTimestamp = signatureTimestamp).getOrThrow()
-                        
+
                         val status = webResponse.playabilityStatus.status
                         android.util.Log.d("AKR_MUSIC", "📡 Client ${client.clientName} status=$status")
-                        
+
                         val formats = webResponse.streamingData?.adaptiveFormats ?: emptyList()
                         val audioFormats = formats.filter { it.mimeType.startsWith("audio/") }
                         android.util.Log.d("AKR_MUSIC", "📡 Client ${client.clientName} audio formats count=${audioFormats.size}")
-                        
+
                         if (status == "OK" && audioFormats.isNotEmpty()) {
-                            // Prioritize audio/mp4 (AAC) over WebM/Opus to prevent hardware/DSP offload issues (static noise/silence)
                             val bestCipherFormat = audioFormats
                                 .filter { it.mimeType.contains("mp4") }
                                 .maxByOrNull { it.bitrate }
@@ -179,7 +181,7 @@ class YoutubeRepository @Inject constructor() {
                             if (bestCipherFormat != null) {
                                 val resolvedUrl = NewPipeExtractor.getStreamUrl(bestCipherFormat, videoId)
                                 if (resolvedUrl != null) {
-                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 2 succeeded with client ${client.clientName} (resolved URL)")
+                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 2 succeeded for videoId=$videoId with client ${client.clientName}")
                                     return@runCatching resolvedUrl
                                 }
                             }
@@ -189,12 +191,15 @@ class YoutubeRepository @Inject constructor() {
                     }
                 }
             } else {
-                android.util.Log.d("AKR_MUSIC", "🔄 Skipping Strategy 1 and Strategy 2 due to non-YouTube videoId ($videoId).")
+                android.util.Log.d("AKR_MUSIC", "🔄 Skipping Strategy 1 & 2 due to non-11-char videoId or blacklisted ID ($videoId).")
             }
 
-            // Strategy 3 & 4: Search fallback for alternative video stream (only if not already a fallback request)
+            // =========================================================================
+            // STRATEGY 3 & 4: Search & Pick First Strategy (scrapeFirstVideoId & top candidates)
+            // Executed for non-11-char queries (e.g. Spotify tracks) or when direct ID extraction fails
+            // =========================================================================
             if (!isFallback) {
-                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 3 & 4: Falling back to alternative video search for videoId=$videoId (Title='$title', Author='$author')")
+                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 3 & 4: Search & Pick First for videoId=$videoId (Title='$title', Author='$author')")
                 try {
                     if (title.isNullOrBlank() && videoId.startsWith("youtube://")) {
                         title = videoId.removePrefix("youtube://")
@@ -208,48 +213,48 @@ class YoutubeRepository @Inject constructor() {
                             android.util.Log.e("AKR_MUSIC", "❌ getMediaInfo failed: ${e.message}")
                         }
                     }
-                    
-                    android.util.Log.d("AKR_MUSIC", "📡 Metadata for fallback: title='$title', author='$author'")
+
+                    android.util.Log.d("AKR_MUSIC", "📡 Metadata for Search & Pick First: title='$title', author='$author'")
                     if (!title.isNullOrBlank()) {
                         val searchQuery = if (!author.isNullOrBlank()) "$author $title" else title
-                        
+
                         // 1. Scraping the first video ID from youtube.com/results
-                        android.util.Log.d("AKR_MUSIC", "🔍 Scraping youtube.com/results for query: '$searchQuery'...")
+                        android.util.Log.d("AKR_MUSIC", "🔍 Strategy 3a: Scraping youtube.com/results for query: '$searchQuery'...")
                         val scrapedId = withContext(Dispatchers.IO) { scrapeFirstVideoId(searchQuery) }
                         if (scrapedId != null && scrapedId != videoId) {
-                            android.util.Log.d("AKR_MUSIC", "🔄 Trying scraped videoId=$scrapedId")
+                            android.util.Log.d("AKR_MUSIC", "🔄 Strategy 3a: Trying scraped videoId=$scrapedId")
                             val url = resolveStreamUrlInternal(scrapedId, title, author, isFallback = true).getOrNull()
                             if (url != null) {
-                                android.util.Log.d("AKR_MUSIC", "✅ Scraper fallback succeeded: resolved stream URL for videoId=$scrapedId")
+                                android.util.Log.d("AKR_MUSIC", "✅ Strategy 3a (Scraper Search & Pick First) succeeded: resolved stream URL for videoId=$scrapedId")
                                 return@runCatching url
                             }
                         }
-                        
+
                         // 2. Fetch search results for both SONG and VIDEO filters
-                        android.util.Log.d("AKR_MUSIC", "🔍 Fetching SONG search results...")
+                        android.util.Log.d("AKR_MUSIC", "🔍 Strategy 3b: Fetching SONG search results...")
                         val songResult = YouTube.search(searchQuery, YouTube.SearchFilter.FILTER_SONG).getOrNull()
                         val songItems = songResult?.items?.filterIsInstance<SongItem>() ?: emptyList()
-                        
-                        android.util.Log.d("AKR_MUSIC", "🔍 Fetching VIDEO search results...")
+
+                        android.util.Log.d("AKR_MUSIC", "🔍 Strategy 3b: Fetching VIDEO search results...")
                         val videoResult = YouTube.search(searchQuery, YouTube.SearchFilter.FILTER_VIDEO).getOrNull()
                         val videoItems = videoResult?.items?.filterIsInstance<SongItem>() ?: emptyList()
-                        
+
                         // Pick the first search result from SONG or VIDEO directly
-                        android.util.Log.d("AKR_MUSIC", "🔄 Trying top search result directly...")
+                        android.util.Log.d("AKR_MUSIC", "🔄 Strategy 3b: Trying top search result directly...")
                         val topCandidates = (songItems.take(1) + videoItems.take(1)).distinctBy { it.id }
                         for (candidate in topCandidates) {
                             if (candidate.id != videoId) {
-                                android.util.Log.d("AKR_MUSIC", "🔄 Trying candidate videoId=${candidate.id} (Title: ${candidate.title}) directly")
+                                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 3b: Trying candidate videoId=${candidate.id} (Title: ${candidate.title}) directly")
                                 val url = resolveStreamUrlInternal(candidate.id, candidate.title, candidate.artists.firstOrNull()?.name, isFallback = true).getOrNull()
                                 if (url != null) {
-                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 3 succeeded: resolved top candidate videoId=${candidate.id}")
+                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 3b (Top Candidate Search & Pick First) succeeded: resolved videoId=${candidate.id}")
                                     return@runCatching url
                                 }
                             }
                         }
 
                         // Fallback: Score all candidates using fuzzy matching
-                        android.util.Log.d("AKR_MUSIC", "🔄 Falling back to scored candidate matching...")
+                        android.util.Log.d("AKR_MUSIC", "🔄 Strategy 4: Trying scored candidate matching...")
                         val allCandidates = (songItems + videoItems).distinctBy { it.id }
                         val scoredCandidates = allCandidates.map { candidate ->
                             val score = scoreCandidate(title, author, candidate)
@@ -257,20 +262,20 @@ class YoutubeRepository @Inject constructor() {
                             Pair(candidate, score)
                         }.filter { it.second > 0.0 }
                         .sortedByDescending { it.second }
-                        
+
                         for ((candidate, score) in scoredCandidates) {
                             if (candidate.id != videoId) {
-                                android.util.Log.d("AKR_MUSIC", "🔄 Trying candidate videoId=${candidate.id} (Title: ${candidate.title}, Score: $score)")
+                                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 4: Trying candidate videoId=${candidate.id} (Title: ${candidate.title}, Score: $score)")
                                 val url = resolveStreamUrlInternal(candidate.id, candidate.title, candidate.artists.firstOrNull()?.name, isFallback = true).getOrNull()
                                 if (url != null) {
-                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 4 succeeded: resolved candidate videoId=${candidate.id}")
+                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 4 (Scored Candidate Search) succeeded: resolved videoId=${candidate.id}")
                                     return@runCatching url
                                 }
                             }
                         }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("AKR_MUSIC", "❌ Strategy 3/4 failed: ${e.message}")
+                    android.util.Log.e("AKR_MUSIC", "❌ Strategy 3 & 4 (Search Fallback) failed: ${e.message}")
                 }
             }
 

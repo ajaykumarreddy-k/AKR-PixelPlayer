@@ -1142,17 +1142,29 @@ class DualPlayerEngine @Inject constructor(
         var artist = mediaItem?.mediaMetadata?.artist?.toString()
 
         if (title.isNullOrBlank() || title == "youtube") {
-            title = videoIdOrQuery
-            try {
-                if (videoIdOrQuery.length == 11) {
-                    val song = musicRepository.getSongsByIds(listOf(videoIdOrQuery)).first().firstOrNull()
-                    if (song != null) {
-                        title = song.title
-                        artist = song.artist
+            val matchedItem = queueSnapshot.find {
+                it.mediaId == videoIdOrQuery ||
+                it.localConfiguration?.uri?.toString() == rawUriString ||
+                it.localConfiguration?.uri?.toString() == uri.toString()
+            }
+            val matchedTitle = matchedItem?.mediaMetadata?.title?.toString()
+            val matchedArtist = matchedItem?.mediaMetadata?.artist?.toString()
+            if (!matchedTitle.isNullOrBlank() && matchedTitle != "youtube") {
+                title = matchedTitle
+                artist = matchedArtist
+            } else {
+                title = videoIdOrQuery
+                try {
+                    if (videoIdOrQuery.length == 11) {
+                        val song = musicRepository.getSongsByIds(listOf(videoIdOrQuery)).first().firstOrNull()
+                        if (song != null) {
+                            title = song.title
+                            artist = song.artist
+                        }
                     }
+                } catch (e: Exception) {
+                    Timber.tag("DualPlayerEngine").w(e, "Failed to resolve metadata from database")
                 }
-            } catch (e: Exception) {
-                Timber.tag("DualPlayerEngine").w(e, "Failed to resolve metadata from database")
             }
         }
         youtubeRepository.resolveStreamUrl(videoIdOrQuery, songTitle = title, songArtist = artist).getOrNull()?.toUri()
