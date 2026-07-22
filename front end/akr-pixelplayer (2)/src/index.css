@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500&family=Google+Sans+Text:ital,wght@0,400;0,500;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=VT323&family=Titan+One&display=swap');
 @import "tailwindcss";
 
@@ -6,12 +6,12 @@
   --color-primary-bg: #e7e6e1;
   --color-secondary: #ffffff;
   --color-accent: #111111;
-  --font-sans: "Inter", "Google Sans", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Google Sans", "Google Sans Text", "Inter", "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", serif;
   --font-pixel: "VT323", monospace;
   --font-titan: "Titan One", display, sans-serif;
   --font-serif-italic: "Playfair Display", serif;
-  --font-inter: "Inter", sans-serif;
+  --font-inter: "Google Sans", "Inter", sans-serif;
 
   --animate-marquee: marquee 25s linear infinite;
   --animate-marquee-slow: marquee 35s linear infinite;
