@@ -2,7 +2,7 @@ import React from "react";
 
 const PixelFooter = () => {
   return (
-    <footer className="w-full bg-[#f39c9c] text-[#223521] px-8 py-12 md:px-12 md:py-16 lg:px-16 lg:pt-20 lg:pb-10 rounded-t-[40px] max-w-[1920px] mx-auto overflow-hidden font-inter">
+    <footer className="w-full bg-[#f39c9c] text-[#223521] px-8 py-12 md:px-12 md:py-16 lg:px-16 lg:pt-20 lg:pb-10 rounded-t-[35px] md:rounded-t-[50px] overflow-hidden font-inter">
       {/* Top Grid Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-16 lg:mb-24">
 

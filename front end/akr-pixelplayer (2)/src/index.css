@@ -1,22 +1,86 @@
 @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500&family=Titan+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=VT323&family=Titan+One&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-primary-bg: #0b0f19;
-  --color-secondary: #f3efea;
-  --color-accent: #ffffff;
-  --font-sans: "Google Sans", "Product Sans", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --color-primary-bg: #e7e6e1;
+  --color-secondary: #ffffff;
+  --color-accent: #111111;
+  --font-sans: "Inter", "Google Sans", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-pixel: "VT323", monospace;
   --font-titan: "Titan One", display, sans-serif;
   --font-serif-italic: "Playfair Display", serif;
   --font-inter: "Inter", sans-serif;
 
   --animate-marquee: marquee 25s linear infinite;
   --animate-marquee-slow: marquee 35s linear infinite;
-  --animate-blob: blob-float 15s infinite alternate ease-in-out;
 }
 
-/* Custom Font Utilities for Footer Replica */
+/* Custom Font & Design Utilities for NiceAtNoon Studio Layout */
+.font-pixel {
+  font-family: "VT323", monospace;
+}
+
+.pixel-heading {
+  transform: skewX(-12deg);
+  display: inline-block;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
+}
+
+/* Capsule Card Styling (NiceAtNoon Style) */
+.capsule-card {
+  border-radius: 3rem;
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.capsule-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Pill Button Styling */
+.btn-pill {
+  border: 1.5px solid rgba(17, 17, 17, 0.2);
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #111111;
+  border-radius: 9999px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  transition: all 0.25s ease;
+}
+
+.btn-pill:hover {
+  background-color: #111111;
+  color: #ffffff;
+  border-color: #111111;
+}
+
+/* Hyper-realistic 3D Brushed Metal Plaque */
+.plaque-container {
+  background: linear-gradient(135deg, #f5f5f5 0%, #dcdcdc 30%, #b0b0b0 50%, #d0d0d0 70%, #f0f0f0 100%);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.18),
+    inset 1.5px 1.5px 3px rgba(255, 255, 255, 0.95),
+    inset -1.5px -1.5px 4px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.engraved-text {
+  color: #222;
+  text-shadow: 
+    -1px -1px 1px rgba(0, 0, 0, 0.3),
+    1px 1px 1px rgba(255, 255, 255, 0.85);
+}
+.engraved-line {
+  background-color: #888;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+}
+
 .font-titan {
   font-family: "Titan One", display, sans-serif;
 }
@@ -38,10 +102,10 @@ body {
 }
 
 body {
-  background-color: var(--color-primary-bg);
-  color: var(--color-secondary);
+  background-color: #e7e6e1;
+  color: #111111;
   font-family: var(--font-sans);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Glassmorphism Utilities */
