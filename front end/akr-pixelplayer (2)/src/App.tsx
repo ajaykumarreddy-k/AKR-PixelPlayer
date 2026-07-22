@@ -91,6 +91,8 @@ export default function App() {
           <span className="text-black/20 font-light">|</span>
           <a href="#audio-engine" className="hover:text-black px-3.5 py-1 transition-colors">Audio Engine</a>
           <span className="text-black/20 font-light">|</span>
+          <a href="#faq" className="hover:text-black px-3.5 py-1 transition-colors">FAQ</a>
+          <span className="text-black/20 font-light">|</span>
           <a href="#creator" className="hover:text-black px-3.5 py-1 transition-colors">Creator</a>
           <span className="text-black/20 font-light">|</span>
           <a href="#credits" className="hover:text-black px-3.5 py-1 transition-colors">Credits</a>
@@ -137,6 +139,7 @@ export default function App() {
             <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold tracking-tight text-[#111111]">Features</a>
             <a href="#playlists" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold tracking-tight text-[#111111]">Platforms</a>
             <a href="#audio-engine" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold tracking-tight text-[#111111]">Audio Engine</a>
+            <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold tracking-tight text-[#111111]">FAQ</a>
             <a href="#creator" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold tracking-tight text-[#111111]">Creator</a>
             <a href="#credits" onClick={() => setMobileMenuOpen(false)} className="text-xl font-bold tracking-tight text-[#111111]">Credits</a>
             <a
@@ -154,6 +157,11 @@ export default function App() {
       {/* Hero Section in Spacious, Pixel-Perfect Ctrl Reference Style */}
       <section className="pt-20 sm:pt-32 md:pt-40 pb-20 sm:pb-28 px-6 sm:px-10 md:px-16 max-w-[1600px] mx-auto w-full flex flex-col items-center text-center">
         
+        {/* Single Primary H1 for Search Engine & AI Agent Discoverability */}
+        <h1 className="sr-only">
+          AKR Pixel Player — Open-Source Bit-Perfect Audio & Wear OS Player Studio
+        </h1>
+
         {/* Centered Kicker / Subtitle Text with Extra Spacing */}
         <motion.p
           initial={{ opacity: 0, y: -10 }}
@@ -659,6 +667,104 @@ export default function App() {
                 Stream regional tracks & map local playlists.
               </p>
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* FAQ Section (AEO & AI Search Optimized with Question/Answer pairs & outbound citations) */}
+      <section id="faq" className="py-24 sm:py-32 px-6 md:px-12 max-w-[1600px] mx-auto w-full">
+        <div className="text-center mb-16">
+          <BlindsTextReveal
+            text="FAQ"
+            color="#111111"
+            blindsColor="#3B82F6"
+            tag="h2"
+            direction="left-to-right"
+            trigger="Scroll"
+            scrollTriggerPosition="center"
+            reverse={true}
+            staggerAmount={0.06}
+            className="font-pixel text-7xl md:text-[8.5rem] pixel-heading text-center"
+            font={{ fontFamily: 'VT323, monospace', textAlign: 'center' }}
+          />
+          <p className="text-lg md:text-xl text-[#111111]/70 max-w-2xl mx-auto mt-4 font-medium">
+            Answers to common questions about AKR Pixel Player's architecture, audio fidelity, and device compatibility.
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-white border border-black/10 p-8 sm:p-10 rounded-[2.5rem] shadow-sm hover:border-black transition-all"
+          >
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111111] mb-3">
+              What is AKR Pixel Player?
+            </h3>
+            <p className="text-[#111111]/80 text-base leading-relaxed font-medium">
+              AKR Pixel Player is an open-source high-fidelity audio player for Android and Wear OS. It combines Google's <a href="https://developer.android.com/guide/topics/media/exoplayer" target="_blank" rel="noreferrer" className="text-black underline font-bold hover:text-blue-600">Media3 ExoPlayer</a> framework with custom C/C++ <a href="https://ffmpeg.org/" target="_blank" rel="noreferrer" className="text-black underline font-bold hover:text-blue-600">FFmpeg decoders</a> for uncompressed 32-bit / 384kHz sound rendering. Check out our <a href="#features" className="text-black underline font-bold">key features</a> and <a href="#playlists" className="text-black underline font-bold">platform integrations</a>.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="bg-white border border-black/10 p-8 sm:p-10 rounded-[2.5rem] shadow-sm hover:border-black transition-all"
+          >
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111111] mb-3">
+              Does AKR Pixel Player support gapless bit-perfect playback?
+            </h3>
+            <p className="text-[#111111]/80 text-base leading-relaxed font-medium">
+              Yes! The player uses a native audio pipeline that bypasses default Android sample rate conversion to deliver bit-perfect, zero-latency gapless transitions across FLAC, WAV, ALAC, and DSD formats. Learn more about our <a href="#audio-engine" className="text-black underline font-bold">bit-perfect audio engine</a>.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="bg-white border border-black/10 p-8 sm:p-10 rounded-[2.5rem] shadow-sm hover:border-black transition-all"
+          >
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111111] mb-3">
+              Can I sync playlists with Wear OS smartwatches?
+            </h3>
+            <p className="text-[#111111]/80 text-base leading-relaxed font-medium">
+              Yes, AKR Pixel Player features standalone <a href="https://developer.android.com/training/wearables/apps/audio" target="_blank" rel="noreferrer" className="text-black underline font-bold hover:text-blue-600">Wear OS audio routing</a>. You can transfer offline playlists directly to your watch for phone-free workouts and listening.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="bg-white border border-black/10 p-8 sm:p-10 rounded-[2.5rem] shadow-sm hover:border-black transition-all"
+          >
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111111] mb-3">
+              Which streaming platforms are supported for playlist import?
+            </h3>
+            <p className="text-[#111111]/80 text-base leading-relaxed font-medium">
+              AKR Pixel Player currently supports ad-free streaming and playlist imports from YouTube Music, with upcoming support for Spotify, Apple Music, and JioSaavn. Read about <a href="#creator" className="text-black underline font-bold">the developer</a> and <a href="#credits" className="text-black underline font-bold">project credits</a>.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="bg-white border border-black/10 p-8 sm:p-10 rounded-[2.5rem] shadow-sm hover:border-black transition-all"
+          >
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111111] mb-3">
+              Is AKR Pixel Player free and open source?
+            </h3>
+            <p className="text-[#111111]/80 text-base leading-relaxed font-medium">
+              Yes, AKR Pixel Player is 100% free and open-source. You can access the full source code and latest releases directly on <a href="https://github.com/ajaykumarreddy-k/AKR-Music-Mix" target="_blank" rel="noreferrer" className="text-black underline font-bold hover:text-blue-600">GitHub</a>.
+            </p>
           </motion.div>
         </div>
       </section>

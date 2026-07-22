@@ -3,8 +3,128 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AKR Pixel Player — Open-Source Bit-Perfect Audio & Wear OS Player</title>
+
+    <!-- Meta Description (154 characters - optimal 50-160 range) -->
+    <meta name="description" content="AKR Pixel Player is an open-source media player studio featuring bit-perfect gapless audio playback, standalone Wear OS sync, and AI playlist generation." />
+    <meta name="keywords" content="AKR Pixel Player, AKR Music, Media3 ExoPlayer, FFmpeg audio player, gapless playback, bit-perfect Android player, Wear OS music sync, open source music app, YouTube Music player, generative AI playlists" />
+    <meta name="author" content="ajaykumarreddy-k" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://akr-music.vercel.app/" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/Music Logo .png" />
-    <title>AKR - Pixel Player</title>
+    <link rel="apple-touch-icon" href="/Music Logo .png" />
+
+    <!-- Open Graph / Facebook / LinkedIn Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://akr-music.vercel.app/" />
+    <meta property="og:site_name" content="AKR-Music" />
+    <meta property="og:title" content="AKR Pixel Player — Open-Source Bit-Perfect Audio & Wear OS Player" />
+    <meta property="og:description" content="Open-source Android and Wear OS audio player studio with bit-perfect gapless playback, YouTube Music import, and generative AI playlists." />
+    <meta property="og:image" content="https://akr-music.vercel.app/Music%20Logo%20.png" />
+    <meta property="og:image:alt" content="AKR Pixel Player Logo" />
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://akr-music.vercel.app/" />
+    <meta name="twitter:title" content="AKR Pixel Player — Bit-Perfect Audio & Wear OS Player" />
+    <meta name="twitter:description" content="Open-source audio player studio featuring gapless 32-bit playback, Wear OS sync, and AI playlist generation." />
+    <meta name="twitter:image" content="https://akr-music.vercel.app/Music%20Logo%20.png" />
+
+    <!-- JSON-LD Structured Data (SoftwareApplication, Organization, and FAQPage) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://akr-music.vercel.app/#software",
+          "name": "AKR Pixel Player",
+          "alternateName": "AKR-Music",
+          "operatingSystem": "Android, Wear OS",
+          "applicationCategory": "MultimediaApplication",
+          "offers": {
+            "@type": "Offer",
+            "price": "0.00",
+            "priceCurrency": "USD"
+          },
+          "description": "An open-source Android and Wear OS audio player studio specializing in bit-perfect gapless playback, playlist synchronization, and generative AI mixes.",
+          "downloadUrl": "https://github.com/ajaykumarreddy-k/AKR-Music-Mix/releases/latest",
+          "featureList": [
+            "Bit-Perfect 32-bit/384kHz Gapless Playback",
+            "Media3 ExoPlayer & Native FFmpeg Decoders",
+            "Standalone Wear OS Smartwatch Sync",
+            "Universal YouTube Music & Spotify Playlist Import",
+            "On-Device Generative AI Mix Creation"
+          ],
+          "author": {
+            "@type": "Person",
+            "name": "ajaykumarreddy-k",
+            "url": "https://github.com/ajaykumarreddy-k"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://akr-music.vercel.app/#organization",
+          "name": "AKR Music Studio",
+          "url": "https://akr-music.vercel.app/",
+          "logo": "https://akr-music.vercel.app/Music%20Logo%20.png",
+          "sameAs": [
+            "https://github.com/ajaykumarreddy-k/AKR-Music-Mix",
+            "https://github.com/ajaykumarreddy-k"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://akr-music.vercel.app/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is AKR Pixel Player?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "AKR Pixel Player is an open-source high-fidelity audio player for Android and Wear OS devices. It integrates Media3 ExoPlayer with native FFmpeg decoders for gapless, bit-perfect sound rendering up to 32-bit / 384kHz."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does AKR Pixel Player support gapless bit-perfect playback?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, AKR Pixel Player features an uncompressed audio pipeline with custom C/C++ native FFmpeg decoders to ensure bit-perfect, zero-latency gapless track transitions."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I sync music with Wear OS smartwatches?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, AKR Pixel Player offers standalone Wear OS smartwatch synchronization, allowing offline local track playback directly from your wrist."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Which streaming platforms are supported for playlist import?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "AKR Pixel Player supports direct ad-free streaming and playlist imports from YouTube Music, with upcoming support for Spotify, Apple Music, and JioSaavn."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is AKR Pixel Player free and open source?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, AKR Pixel Player is 100% free and open-source under open licensing. You can view the full source code on GitHub."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

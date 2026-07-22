@@ -1,0 +1,23 @@
+# AKR Pixel Player (AKR-Music)
+
+> An open-source media player studio specializing in gapless bit-perfect playback, standalone Wear OS sync, and generative AI playlist mixes.
+
+## Summary
+AKR Pixel Player is an open-source Android & Wear OS audio application created by ajaykumarreddy-k. It combines Media3 ExoPlayer audio pipeline with native FFmpeg audio decoders for bit-perfect rendering up to 32-bit / 384kHz. It supports universal playlist imports from YouTube Music, Spotify, and local M3U/PLS files, along with on-device generative AI mix creation.
+
+## Key Features
+- **Bit-Perfect & Gapless Engine**: Media3 ExoPlayer coupled with custom FFmpeg native decoders.
+- **Universal Playlist Import**: Import and map playlists from YouTube Music, Spotify, and local audio files.
+- **Wear OS Standalone Sync**: Offline audio playback and direct track sync on Wear OS smartwatches.
+- **On-Device Generative AI Mixes**: Natural language prompting converts to personalized dynamic audio playlists.
+- **Open Source Foundation**: Built upon modified elements from PixelPlayer by theovilardo and Echo-Music by EchoMusicApp.
+
+## Technical Architecture
+- **Language & Frameworks**: Kotlin, Jetpack Compose, Material 3, Media3 ExoPlayer, Native FFmpeg (C/C++).
+- **Web Portal**: React 19, TypeScript, Vite, TailwindCSS, Motion, GSAP, SplitText.
+
+## Links & References
+- Homepage: https://akr-music.vercel.app/
+- GitHub Repository: https://github.com/ajaykumarreddy-k/AKR-Music-Mix
+- Latest APK Release: https://github.com/ajaykumarreddy-k/AKR-Music-Mix/releases/latest
+- Developer Profile: https://github.com/ajaykumarreddy-k
