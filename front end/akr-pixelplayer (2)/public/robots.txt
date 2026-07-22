@@ -1,9 +1,6 @@
-# robots.txt for AKR-Music (https://akr-music.vercel.app/)
-
 User-agent: *
 Allow: /
 
-# Explicitly allow AI Crawlers and Answer Engine bots
 User-agent: GPTBot
 Allow: /
 
@@ -14,12 +11,6 @@ User-agent: PerplexityBot
 Allow: /
 
 User-agent: Google-Extended
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: ChatGPT-User
 Allow: /
 
 Sitemap: https://akr-music.vercel.app/sitemap.xml

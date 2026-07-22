@@ -127,7 +127,44 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- SEO / AEO Static Content for AI Crawlers (Replaced by React on mount) -->
+      <main class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">
+        <h1>AKR Pixel Player — Open-Source Bit-Perfect Audio & Wear OS Player Studio</h1>
+        <p>AKR Pixel Player is an open-source media player studio specializing in gapless bit-perfect playback, Wear OS smartwatch sync, and generative AI playlist mixes.</p>
+        
+        <h2>Features</h2>
+        <p>Enjoy uncompressed audio with our bit-perfect engine. We use custom FFmpeg decoders to ensure zero-latency gapless transitions across FLAC, WAV, ALAC, and DSD formats.</p>
+        <a href="#features">Learn more about features</a>
+
+        <h2>Audio Engine</h2>
+        <p>Built on top of Google's ExoPlayer, AKR Pixel Player delivers unparalleled audio fidelity. We bypass the default Android sample rate conversion for true bit-perfect output.</p>
+        <a href="#audio-engine">Explore the audio engine</a>
+        <a href="https://developer.android.com/guide/topics/media/exoplayer" rel="external">Read ExoPlayer Documentation</a>
+        <a href="https://ffmpeg.org/" rel="external">Learn about FFmpeg</a>
+
+        <h2>Playlists & Wear OS Sync</h2>
+        <p>Import playlists from YouTube Music and enjoy them offline. With standalone Wear OS audio routing, you can sync your tracks directly to your smartwatch and listen without your phone.</p>
+        <a href="#playlists">View platform integrations</a>
+        <a href="https://developer.android.com/training/wearables/apps/audio" rel="external">Wear OS Audio Guide</a>
+
+        <h2>Frequently Asked Questions</h2>
+        <h3>What is AKR Pixel Player?</h3>
+        <p>AKR Pixel Player is an open-source high-fidelity audio player for Android and Wear OS. It combines Google's Media3 ExoPlayer framework with custom C/C++ FFmpeg decoders for uncompressed 32-bit / 384kHz sound rendering.</p>
+        
+        <h3>Does AKR Pixel Player support gapless bit-perfect playback?</h3>
+        <p>Yes! The player uses a native audio pipeline that bypasses default Android sample rate conversion to deliver bit-perfect, zero-latency gapless transitions.</p>
+        
+        <h3>Can I sync playlists with Wear OS smartwatches?</h3>
+        <p>Yes, AKR Pixel Player features standalone Wear OS audio routing. You can transfer offline playlists directly to your watch.</p>
+
+        <h2>Creator & Credits</h2>
+        <p>Created by ajaykumarreddy-k. AKR Pixel Player is 100% free and open-source.</p>
+        <a href="#creator">About the Creator</a>
+        <a href="#credits">View Credits</a>
+        <a href="https://github.com/ajaykumarreddy-k/AKR-Music-Mix" rel="external">View source code on GitHub</a>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
