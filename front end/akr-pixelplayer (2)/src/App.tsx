@@ -3,6 +3,8 @@ import { Github, Play, Download, Music, Sparkles, Layers, Menu, X, ListMusic, Ar
 import PixelFooter from './components/PixelFooter';
 import QRCodeCard from './components/QRCodeCard';
 import { motion, AnimatePresence } from 'motion/react';
+import BlindsTextReveal from './BlindsTextReveal';
+import LoadingScreen from './components/LoadingScreen';
 
 // Import App Screenshots directly for 100% reliable Vite bundling and dev server rendering
 import screenshot1 from '../images/screenshot1.jpg';
@@ -49,6 +51,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-[#111111] font-sans flex flex-col relative overflow-x-hidden selection:bg-[#111111] selection:text-white">
+
+      {/* Intro Counting Loader from AKR-Inspo */}
+      <LoadingScreen
+        backgroundColor="#000000"
+        swipeDuration={800}
+        countSpeed={16}
+      />
+
 
       {/* Fixed Header Locked on Scroll (Exact Ctrl Style) */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-transparent h-[90px] flex justify-between items-center px-6 sm:px-10 md:px-16 pointer-events-none">
@@ -430,9 +440,18 @@ export default function App() {
           </div>
 
           {/* Main Plaque Title */}
-          <h3 className="engraved-text font-serif text-[2.5rem] leading-[0.95] font-normal mb-8 uppercase tracking-widest text-left mt-2">
-            AKR PIXEL<br />PLAYER
-          </h3>
+          <BlindsTextReveal
+            text="AKR PIXEL PLAYER"
+            color="#222"
+            blindsColor="#888888"
+            tag="h3"
+            direction="left-to-right"
+            trigger="Scroll"
+            scrollTriggerPosition="center"
+            reverse={true}
+            staggerAmount={0.08}
+            className="engraved-text font-serif text-[2.5rem] leading-[0.95] font-normal mb-8 uppercase tracking-widest text-left mt-2"
+          />
           
           {/* Separator Line */}
           <div className="w-full h-[2px] engraved-line mb-6"></div>
@@ -465,14 +484,19 @@ export default function App() {
       {/* Features Section */}
       <section id="features" className="py-24 sm:py-32 px-6 md:px-12 max-w-[1600px] mx-auto w-full">
         <div className="text-center mb-20">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-pixel text-7xl md:text-[8.5rem] text-[#111111] pixel-heading"
-          >
-            Features
-          </motion.h2>
+          <BlindsTextReveal
+            text="Features"
+            color="#111111"
+            blindsColor="#8B5CF6"
+            tag="h2"
+            direction="left-to-right"
+            trigger="Scroll"
+            scrollTriggerPosition="center"
+            reverse={true}
+            staggerAmount={0.06}
+            className="font-pixel text-7xl md:text-[8.5rem] pixel-heading text-center"
+            font={{ fontFamily: 'VT323, monospace', textAlign: 'center' }}
+          />
           <p className="text-lg md:text-xl text-[#111111]/70 max-w-2xl mx-auto mt-4 font-medium">
             Core capabilities designed for modern high-resolution mobile audio.
           </p>
@@ -507,14 +531,20 @@ export default function App() {
       {/* Supported Platforms Section */}
       <section id="playlists" className="py-24 sm:py-32 px-6 md:px-12 max-w-[1600px] mx-auto w-full">
         <div className="text-center mb-20">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-pixel text-7xl md:text-[8.5rem] text-[#111111] pixel-heading"
-          >
-            Platforms
-          </motion.h2>
+          <BlindsTextReveal
+            text="Platforms"
+            color="#111111"
+            blindsColor="#EC4899"
+            tag="h2"
+            direction="right-to-left"
+            animationMode="in-out"
+            trigger="Scroll"
+            scrollTriggerPosition="center"
+            reverse={true}
+            staggerAmount={0.06}
+            className="font-pixel text-7xl md:text-[8.5rem] pixel-heading text-center"
+            font={{ fontFamily: 'VT323, monospace', textAlign: 'center' }}
+          />
           <p className="text-lg md:text-xl text-[#111111]/70 max-w-2xl mx-auto mt-4 font-medium">
             Supported Playlist Sources & Streaming Integrations
           </p>
@@ -636,14 +666,20 @@ export default function App() {
       {/* Creator Spotlight Section */}
       <section id="creator" className="py-24 sm:py-32 px-6 md:px-12 max-w-[1600px] mx-auto w-full">
         <div className="text-center mb-20">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-pixel text-7xl md:text-[8.5rem] text-[#111111] pixel-heading"
-          >
-            Creator
-          </motion.h2>
+          <BlindsTextReveal
+            text="Creator"
+            color="#111111"
+            blindsColor="#F59E0B"
+            tag="h2"
+            direction="left-to-right"
+            alternate={true}
+            trigger="Scroll"
+            scrollTriggerPosition="center"
+            reverse={true}
+            staggerAmount={0.06}
+            className="font-pixel text-7xl md:text-[8.5rem] pixel-heading text-center"
+            font={{ fontFamily: 'VT323, monospace', textAlign: 'center' }}
+          />
         </div>
 
         <motion.div 
@@ -695,14 +731,20 @@ export default function App() {
       {/* Credits & Acknowledgments Section */}
       <section id="credits" className="py-24 sm:py-32 px-6 md:px-12 max-w-[1600px] mx-auto w-full">
         <div className="text-center mb-20">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-pixel text-7xl md:text-[8.5rem] text-[#111111] pixel-heading"
-          >
-            Credits
-          </motion.h2>
+          <BlindsTextReveal
+            text="Credits"
+            color="#111111"
+            blindsColor="#10B981"
+            tag="h2"
+            direction="top-to-bottom"
+            lineOrder="center-out"
+            trigger="Scroll"
+            scrollTriggerPosition="center"
+            reverse={true}
+            staggerAmount={0.06}
+            className="font-pixel text-7xl md:text-[8.5rem] pixel-heading text-center"
+            font={{ fontFamily: 'VT323, monospace', textAlign: 'center' }}
+          />
           <p className="text-lg md:text-xl text-[#111111]/80 max-w-3xl mx-auto mt-4 font-medium">
             This project is a modified and unified version of two exceptional open-source music applications. Special thanks and credits go to:
           </p>
