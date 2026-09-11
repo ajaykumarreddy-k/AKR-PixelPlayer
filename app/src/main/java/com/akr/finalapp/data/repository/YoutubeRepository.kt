@@ -10,6 +10,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
 
 @Singleton
 class YoutubeRepository @Inject constructor() {
@@ -98,25 +103,18 @@ class YoutubeRepository @Inject constructor() {
             var title = songTitle
             var author = songArtist
 
-            // Validate if the videoId actually matches the requested songTitle
-            var isVideoIdValid = videoId.length == 11 && !isBlacklisted(videoId)
-            if (isBlacklisted(videoId)) {
+            // For clean 11-char video IDs we skip the getMediaInfo() validation round-trip.
+            // That call (~300-500ms) is only needed when we have no reliable ID (Spotify/search
+            // queries) or when the ID was explicitly blacklisted. Direct YouTube playlist/search
+            // results already carry the correct videoId — re-validating them adds pure latency.
+            val isBlacklisted = isBlacklisted(videoId)
+            if (isBlacklisted) {
                 android.util.Log.w("AKR_MUSIC", "⚠️ Video ID $videoId is blacklisted.")
             }
-            if (isVideoIdValid && !isFallback && !title.isNullOrBlank()) {
-                val mediaInfo = YouTube.getMediaInfo(videoId).getOrNull()
-                if (mediaInfo != null) {
-                    val videoTitle = mediaInfo.title
-                    if (!videoTitle.isNullOrBlank()) {
-                        val score = getTitleSimilarityScore(title, videoTitle)
-                        android.util.Log.d("AKR_MUSIC", "🔍 Verifying videoId=$videoId title='${videoTitle}' against expected='${title}'. Score: $score")
-                        if (score < 0.45) {
-                            android.util.Log.w("AKR_MUSIC", "⚠️ Video ID title mismatch! Expected '$title', got '$videoTitle'. Rejecting original videoId.")
-                            isVideoIdValid = false
-                        }
-                    }
-                }
-            }
+            var isVideoIdValid = videoId.length == 11 && !isBlacklisted
+
+            // Only fetch metadata when the title is completely unknown (e.g. youtube:// URI with
+            // no song metadata, or a Spotify track whose YT ID we haven't confirmed yet).
             if (title.isNullOrBlank()) {
                 if (videoId.startsWith("youtube://")) {
                     title = videoId.removePrefix("youtube://")
@@ -159,7 +157,9 @@ class YoutubeRepository @Inject constructor() {
                 }
 
                 // Strategy 2: Multi-client InnerTube clients + NewPipe cipher deobfuscation
-                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 2: Trying Multi-client InnerTube + cipher for videoId=$videoId")
+                // All clients are tried IN PARALLEL — we take the first one that returns a
+                // usable URL instead of waiting for each serially (saves ~800-1500ms).
+                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 2: Trying Multi-client InnerTube (parallel) + cipher for videoId=$videoId")
                 val signatureTimestamp = NewPipeExtractor.getSignatureTimestamp(videoId).getOrNull()
                 android.util.Log.d("AKR_MUSIC", "📡 Strategy 2 signatureTimestamp=$signatureTimestamp")
 
@@ -178,35 +178,70 @@ class YoutubeRepository @Inject constructor() {
                     YouTubeClient.ANDROID_CREATOR
                 )
 
-                for (client in clientsToTry) {
-                    try {
-                        android.util.Log.d("AKR_MUSIC", "🔄 Strategy 2: Trying client ${client.clientName} (${client.friendlyName ?: ""})")
-                        val webResponse = YouTube.player(videoId, client = client, signatureTimestamp = signatureTimestamp).getOrThrow()
+                // Race all clients in parallel; the first successful URL wins and all others
+                // are cancelled. We use async + awaitAll so the scope always terminates
+                // (even when no client succeeds), and cancel remaining jobs as soon as one wins.
+                val parallelResult: String? = try {
+                    coroutineScope {
+                        val winner = CompletableDeferred<String?>()
+                        val pendingCount = java.util.concurrent.atomic.AtomicInteger(clientsToTry.size)
 
-                        val status = webResponse.playabilityStatus.status
-                        android.util.Log.d("AKR_MUSIC", "📡 Client ${client.clientName} status=$status")
+                        val jobs = clientsToTry.map { client ->
+                            launch(Dispatchers.IO) {
+                                var clientResult: String? = null
+                                try {
+                                    android.util.Log.d("AKR_MUSIC", "🔄 Strategy 2: Trying client ${client.clientName} (parallel)")
+                                    val webResponse = YouTube.player(
+                                        videoId,
+                                        client = client,
+                                        signatureTimestamp = signatureTimestamp
+                                    ).getOrThrow()
 
-                        val formats = webResponse.streamingData?.adaptiveFormats ?: emptyList()
-                        val audioFormats = formats.filter { it.mimeType.startsWith("audio/") }
-                        android.util.Log.d("AKR_MUSIC", "📡 Client ${client.clientName} audio formats count=${audioFormats.size}")
+                                    val status = webResponse.playabilityStatus.status
+                                    val formats = webResponse.streamingData?.adaptiveFormats ?: emptyList()
+                                    val audioFormats = formats.filter { it.mimeType.startsWith("audio/") }
 
-                        if (status == "OK" && audioFormats.isNotEmpty()) {
-                            val bestCipherFormat = audioFormats
-                                .filter { it.mimeType.contains("mp4") }
-                                .maxByOrNull { it.bitrate }
-                                ?: audioFormats.maxByOrNull { it.bitrate }
+                                    if (status == "OK" && audioFormats.isNotEmpty()) {
+                                        val bestCipherFormat = audioFormats
+                                            .filter { it.mimeType.contains("mp4") }
+                                            .maxByOrNull { it.bitrate }
+                                            ?: audioFormats.maxByOrNull { it.bitrate }
 
-                            if (bestCipherFormat != null) {
-                                val resolvedUrl = NewPipeExtractor.getStreamUrl(bestCipherFormat, videoId)
-                                if (resolvedUrl != null) {
-                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 2 succeeded for videoId=$videoId with client ${client.clientName}")
-                                    return@runCatching resolvedUrl
+                                        if (bestCipherFormat != null) {
+                                            clientResult = NewPipeExtractor.getStreamUrl(bestCipherFormat, videoId)
+                                        }
+                                    }
+                                } catch (e: CancellationException) {
+                                    // Cancelled because another client won — expected, not an error
+                                    return@launch
+                                } catch (e: Exception) {
+                                    android.util.Log.e("AKR_MUSIC", "❌ Strategy 2 client ${client.clientName} failed: ${e.message}")
+                                }
+
+                                // Signal completion — first non-null result wins
+                                if (clientResult != null && !winner.isCompleted) {
+                                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 2 (parallel) winner: client=${client.clientName}")
+                                    winner.complete(clientResult)
+                                } else if (pendingCount.decrementAndGet() == 0 && !winner.isCompleted) {
+                                    // All clients finished with no winner — resolve with null so await() returns
+                                    winner.complete(null)
                                 }
                             }
                         }
-                    } catch (e: Exception) {
-                        android.util.Log.e("AKR_MUSIC", "❌ Strategy 2 client ${client.clientName} failed: ${e.message}")
+                        // Await the winner (always completes: either a URL or null when all fail)
+                        val result = winner.await()
+                        // Cancel remaining jobs once we have our answer
+                        jobs.forEach { it.cancel() }
+                        result
                     }
+                } catch (e: Exception) {
+                    android.util.Log.e("AKR_MUSIC", "❌ Strategy 2 parallel race failed: ${e.message}")
+                    null
+                }
+
+                if (parallelResult != null) {
+                    android.util.Log.d("AKR_MUSIC", "✅ Strategy 2 (parallel) succeeded for videoId=$videoId")
+                    return@runCatching parallelResult
                 }
             } else {
                 android.util.Log.d("AKR_MUSIC", "🔄 Skipping Strategy 1 & 2 due to non-11-char videoId or blacklisted ID ($videoId).")

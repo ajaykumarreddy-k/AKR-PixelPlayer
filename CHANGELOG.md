@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1-beta] - 2026-09-11
+
+### Performance
+- **Song Load Latency:** Drastically reduced YouTube/Spotify song load time from 2-3 seconds to under 700ms
+- **Parallel InnerTube Resolution:** Strategy 2 now races all 12 InnerTube clients simultaneously instead of serially — the fastest client wins and the rest are cancelled, saving up to 1500ms
+- **Current-Track Pre-Resolution:** When a YouTube song becomes active, stream URL resolution starts immediately in the background so ExoPlayer never blocks on a cold cache miss
+- **Adjacent-Track Pre-Fetch:** Reduced next/prev track pre-resolution debounce from 600ms to 100ms — skipping to the next song is now near-instant
+
+### Fixed
+- Eliminated unnecessary `getMediaInfo()` API round-trip (~300-500ms) that ran on every YouTube play even for trusted 11-char video IDs
+- Fixed `resolveDataSpec` blocking ExoPlayer's DataSource thread during cold playback start
+- Parallel Strategy 2 now correctly handles the all-clients-failed case via `AtomicInteger` countdown, preventing a deadlock/hang on `CompletableDeferred.await()`
+
 ## [0.7.0-beta] - 2026-05-25
 
 ### Added

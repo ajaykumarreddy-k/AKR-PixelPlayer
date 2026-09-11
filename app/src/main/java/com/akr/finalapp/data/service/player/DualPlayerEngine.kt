@@ -492,12 +492,31 @@ class DualPlayerEngine @Inject constructor(
             }
             applyWakeModeForCurrentItem()
 
+            // --- Pre-Resolve CURRENT Track Immediately ---
+            // For YouTube (and other cloud) URIs: kick off resolution NOW, before ExoPlayer
+            // calls resolveDataSpec. The LruCache (resolvedUriCache) means the DataSource
+            // resolver will get a cache HIT and return instantly instead of blocking the
+            // ExoPlayer loader thread for 1-3 seconds via runBlocking.
+            if (uri != null && uri.scheme in REMOTE_MEDIA_SCHEMES && uri.scheme == "youtube") {
+                val currentUriString = uri.toString()
+                if (resolvedUriCache.get(currentUriString) == null) {
+                    scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        try {
+                            Timber.tag("DualPlayerEngine").d("Pre-resolving current YouTube URI: %s", currentUriString)
+                            resolveCloudUri(uri, mediaItem)
+                        } catch (e: Exception) {
+                            Timber.tag("DualPlayerEngine").w(e, "Pre-resolution of current track failed")
+                        }
+                    }
+                }
+            }
+
             // --- Pre-Resolve Next/Prev Tracks with Debounce to prevent flooding ---
             preResolutionJob?.cancel()
             // Battery: skip scheduling entirely for local-only neighbours.
             // Pre-resolution only does meaningful work for cloud schemes (telegram,
             // netease, qqmusic, navidrome, jellyfin, gdrive). For libraries with
-            // no cloud sources around the current index, the 600 ms delay + Main
+            // no cloud sources around the current index, the delay + Main
             // dispatch + scope.launch is pure overhead repeated on every track
             // change. Snapshot the adjacent URIs synchronously so we can early-
             // return before paying for the coroutine.
@@ -517,7 +536,7 @@ class DualPlayerEngine @Inject constructor(
 
                 if (adjacentCloudUris.isNotEmpty()) {
                     preResolutionJob = scope.launch {
-                        delay(600) // Wait for user to stop skipping/navigating
+                        delay(100) // Reduced: 600ms → 100ms so next-track URL is ready well before a skip
                         try {
                             for (uriToResolve in adjacentCloudUris) {
                                 resolveCloudUri(uriToResolve)
@@ -932,12 +951,15 @@ class DualPlayerEngine @Inject constructor(
                 val scheme = uri.scheme
                 if (scheme in REMOTE_MEDIA_SCHEMES) {
                     val originalUri = uri.toString()
+                    // Check the cache first — if pre-resolution already populated it this is instant
                     var resolved = resolvedUriCache.get(originalUri)
                     if (resolved == null) {
-                        Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache MISS for %s - resolving synchronously", scheme)
+                        Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache MISS for %s - resolving synchronously (this adds latency; ensure pre-resolution is running)", scheme)
                         resolved = kotlinx.coroutines.runBlocking {
                             runCatching { resolveCloudUri(uri) }.getOrNull()
                         }
+                    } else {
+                        Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache HIT for %s - instant resume", scheme)
                     }
                     if (resolved != null) {
                         return dataSpec.buildUpon().setUri(resolved).build()
