@@ -3560,14 +3560,14 @@ class PlayerViewModel @Inject constructor(
         val mediaItem = MediaItemBuilder.build(song)
         val originalUri = mediaItem.localConfiguration?.uri ?: return mediaItem
         val scheme = originalUri.scheme
-        if (
-            scheme != "telegram" &&
-            scheme != "netease" &&
-            scheme != "qqmusic" &&
-            scheme != "navidrome" &&
-            scheme != "jellyfin" &&
-            scheme != "gdrive"
-        ) {
+
+        // youtube:// was previously excluded here — that was the root cause of the
+        // 'Connecting to YouTube' 1-1.5s delay. ExoPlayer would call resolveDataSpec()
+        // → runBlocking → full resolution while showing the spinner. Now we resolve
+        // YouTube streams here, BEFORE prepare(), so ExoPlayer gets an https:// URL
+        // directly and resolveDataSpec() is a no-op (cache HIT from resolveCloudUri).
+        val knownCloudSchemes = setOf("telegram", "netease", "qqmusic", "navidrome", "jellyfin", "gdrive", "youtube")
+        if (scheme !in knownCloudSchemes) {
             return mediaItem
         }
 
@@ -3575,7 +3575,9 @@ class PlayerViewModel @Inject constructor(
             ensureTelegramPlaybackObserversStarted()
         }
 
-        val resolvedUri = dualPlayerEngine.resolveCloudUri(originalUri)
+        // Pass the full mediaItem (with title + artist metadata) for youtube so
+        // resolveYoutubeUriAsync can skip the getMediaInfo() round-trip entirely.
+        val resolvedUri = dualPlayerEngine.resolveCloudUri(originalUri, mediaItem)
         return if (resolvedUri == originalUri) {
             mediaItem
         } else {
