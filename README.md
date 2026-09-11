@@ -1,29 +1,36 @@
-# AKR - Pixelplayer 🎵
+# AKR - PixelPlayer 🎵
 
 <p align="center">
-  <img src="assets/icon.png" alt="App Icon" width="128"/>
+  <img src="assets/app_logo.png" alt="AKR - PixelPlayer Logo" width="140"/>
 </p>
 
 <p align="center">
-  <strong>A beautiful, feature-rich music player for Android and Wear OS</strong><br>
-  Built with Jetpack Compose, Material Design 3, and advanced streaming integrations.
+  <strong>A modern, ultra-responsive music streaming & local playback powerhouse for Android & Wear OS.</strong><br>
+  Crafted with Jetpack Compose, Material Design 3, Media3 ExoPlayer, and high-performance cloud integrations.
 </p>
 
 <p align="center">
-    <a href="https://github.com/ajaykumarreddy-k/AKR-Music-Mix/releases/latest">
-        <img src="https://img.shields.io/github/v/release/ajaykumarreddy-k/AKR-Music-Mix?include_prereleases&logo=github&style=for-the-badge&label=Latest%20Release" alt="Latest Release">
+    <a href="https://github.com/ajaykumarreddy-k/AKR-PixelPlayer/releases/latest">
+        <img src="https://img.shields.io/github/v/release/ajaykumarreddy-k/AKR-PixelPlayer?include_prereleases&logo=github&style=for-the-badge&label=Latest%20Release" alt="Latest Release">
     </a>
-    <a href="https://github.com/ajaykumarreddy-k/AKR-Music-Mix/releases">
-        <img src="https://img.shields.io/github/downloads/ajaykumarreddy-k/AKR-Music-Mix/total?logo=github&style=for-the-badge" alt="Total Downloads">
+    <a href="https://github.com/ajaykumarreddy-k/AKR-PixelPlayer/releases">
+        <img src="https://img.shields.io/github/downloads/ajaykumarreddy-k/AKR-PixelPlayer/total?logo=github&style=for-the-badge" alt="Total Downloads">
     </a>
     <img src="https://img.shields.io/badge/Android-11%2B-green?style=for-the-badge&logo=android" alt="Android 11+">
     <img src="https://img.shields.io/badge/Kotlin-100%25-purple?style=for-the-badge&logo=kotlin" alt="Kotlin">
+    <img src="https://img.shields.io/badge/Architecture-M3%20%7C%20Hilt%20%7C%20ExoPlayer-blue?style=for-the-badge" alt="Stack">
 </p>
 
 ---
 
-## ‼️ DISCLAIMER
-- No fork of this project will receive support. If you use a fork, ask the forker to support you.
+## ⚡ What's New & Performance Highlights
+
+- ⚡ **Ultra-Low Latency YouTube Streaming**: Reduced track startup latency from ~2–3s down to **<400ms** (and near-instantaneous on cached tracks).
+- 🏎️ **Concurrent InnerTube Stream Racing**: Parallelized multi-client resolution (Android VR + iOS InnerTube endpoints with ExoPlayer fallback) to guarantee the fastest audio stream wins.
+- 🚀 **Pre-Warmed Decipher Pipeline**: Pre-warms `signatureTimestamp` and decipher player scripts in the background on startup, completely eliminating cold-start delays.
+- ⏭️ **Zero-Delay Next/Previous Playback**: Queue engine resolves adjacent tracks concurrently in background threads so skipping tracks is instant and buffer-free.
+- 🎨 **Refreshed Visual Identity**: Brand-new app logo and adaptive launcher icons (round, monochrome, high-res mipmaps) across phone and Wear OS clients.
+- 🛡️ **Streamlined UI Architecture**: Removed blocking UI resolution chains and intermediate toasts for seamless one-tap playback.
 
 ---
 
@@ -31,72 +38,56 @@
 
 ### Mobile App
 <p align="center">
-  <img src="../result/screenshot1.jpg" width="45%" />
-  <img src="../result/screenshot3.jpg" width="45%" />
+  <img src="assets/screenshot1.jpg" width="45%" alt="Player UI" />
+  <img src="assets/screenshot3.jpg" width="45%" alt="Search and Lyrics" />
 </p>
 
-### Wear OS & Output Settings
+### Wear OS & Output Routing
 <p align="center">
-  <img src="../result/WhatsApp%20Image%202026-06-08%20at%2018.50.46.jpeg" width="22%" />
-  <img src="../result/WhatsApp%20Image%202026-06-08%20at%2018.50.46%20(1).jpeg" width="22%" />
-  <img src="../result/WhatsApp%20Image%202026-06-08%20at%2018.50.46%20(2).jpeg" width="22%" />
-  <img src="../result/WhatsApp%20Image%202026-06-08%20at%2018.50.45.jpeg" width="22%" />
+  <img src="assets/wear_screen1.jpeg" width="22%" alt="Wear Screen 1" />
+  <img src="assets/wear_screen2.jpeg" width="22%" alt="Wear Screen 2" />
+  <img src="assets/wear_screen3.jpeg" width="22%" alt="Wear Screen 3" />
+  <img src="assets/wear_screen4.jpeg" width="22%" alt="Wear Screen 4" />
 </p>
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
 ### 🎨 Modern UI/UX
-- **Material You** - Dynamic color theming that adapts to your wallpaper.
-- **Smooth Animations** - Fluid transitions and micro-interactions.
-- **Customizable UI** - Adjustable corner radius for the navigation bar and layout properties.
-- **Dark/Light Theme** - Automatic or manual theme switching.
-- **Album Art Colors** - Dynamic color extraction from album artwork.
+- **Material You Design** - Dynamic colors extracted from wallpaper and album artwork.
+- **Fluid Micro-Animations** - Smooth transitions, responsive gestures, and customizable navigation bar corner radiuses.
+- **Dark & Light Themes** - Seamless automatic or manual switching.
 
-### 🎵 Powerful Playback
-- **Media3 ExoPlayer** - Industry-leading audio engine with FFmpeg support.
-- **Background Playback** - Full media session integration.
-- **Queue Management** - Drag-and-drop reordering.
-- **Shuffle & Repeat** - All playback modes supported.
-- **Gapless Playback** - Seamless transitions between tracks.
-- **Custom Transitions** - Configure crossfades between songs.
-- **Equalizer** - High-fidelity built-in equalizer for audio fine-tuning.
+### 🎵 High-Fidelity Audio Engine
+- **Media3 ExoPlayer + FFmpeg** - Studio-grade audio decoders supporting MP3, FLAC, AAC, OGG, WAV, ALAC, and OPUS.
+- **Gapless Playback & Crossfade** - Seamless transitions between tracks with configurable fade curves.
+- **Integrated Equalizer** - High-precision multi-band equalizer with bass boost and virtualizer.
+- **Background Playback** - Full Android MediaSession integration with lockscreen controls.
 
-### 📚 Library Management
-- **Multi-format Support** - MP3, FLAC, AAC, OGG, WAV, and more.
-- **Browse By** - Songs, Albums, Artists, Genres, Folders.
-- **Smart Artist Parsing** - Configurable delimiters for multi-artist tracks.
-- **Album Artist Grouping** - Proper album organization.
-- **Folder Filtering** - Choose which directories to scan.
+### 🔗 Cloud Streaming & Synchronized Services
+- **YouTube & YouTube Music** - High-speed search, playlists, related songs, and ultra-low latency playback powered by InnerTube.
+- **Telegram (TDLib)** - Stream and sync audio directly from your Telegram chats and channels.
+- **NetEase & QQ Music** - Browse and stream from leading Asian streaming services.
+- **Navidrome & Subsonic** - Link your personal self-hosted music servers.
+- **Jellyfin** - Stream from your Jellyfin media libraries.
 
-### 🔗 Linked Cloud Accounts & Services
-- **Telegram** - Stream and import audio files directly from your Telegram chats and channels (powered by `TDLib`).
-- **NetEase Cloud Music** - Sync your NetEase library and playlists.
-- **QQ Music** - Connect your QQ Music account to access your streaming library.
-- **Navidrome / Subsonic** - Link your self-hosted Subsonic-compatible server to stream music on the go.
-- **Jellyfin** - Connect your Jellyfin media server to stream your tracks.
-- **Google Drive** - Direct cloud integration for library syncing and streaming (coming soon).
+### ⌚ Wear OS Companion Application
+- **Wrist Controller** - Browse playlists, control playback, and adjust volume on the go.
+- **Offline Mode** - Download and store audio files directly onto the watch for phone-free workouts.
+- **Synchronized Lyrics** - Follow synchronized LRC lyrics right on your wrist.
+- **Dynamic Output Routing** - Effortlessly switch audio output between Phone, Watch Speaker, and paired Bluetooth headphones.
 
-### ⌚ Wear OS Companion App
-- **Remote Controller** - Adjust playback, volume, and view track details on your wrist.
-- **Library Explorer** - Browse playlists, albums, and artists directly from the watch.
-- **Offline Mode** - Download and store tracks locally on your Wear OS device for phone-free workouts.
-- **Lyrics Screen** - Follow synchronized lyrics on your watch.
-- **Playback Transfer** - Seamlessly transfer music playback between your phone and your watch.
-- **Output Screen** - Select audio playback outputs dynamically on the watch (Phone, Watch Speaker, Bluetooth headphones).
+### 🤖 AI-Powered Intelligence
+- **AI Playlist Generator** - Generate smart playlists from natural language prompts using Gemini, DeepSeek, or OpenAI models.
+- **Daily Mix** - Personalized daily mixes shaped by your listening habits.
+- **AI Lyrics Translation** - Translate synchronized lyrics on-the-fly across multiple languages.
 
-### 🤖 AI-Powered Playlists & Translations
-- **AI Playlist Generator** - Generate custom playlists from natural language prompts (supports Gemini, Deepseek, OpenAI, etc.).
-- **Daily Mix** - AI-powered personalized playlist based on listening habits.
-- **AI Lyrics Translation** - Automatically translate synchronized lyrics using AI models.
-
-### ⚙️ Advanced Features
-- **Tag Editor** - Edit metadata with TagLib & JAudioTagger (MP3, FLAC, M4A support).
-- **Synchronized Lyrics** - LRC format via LRCLIB API.
-- **Glance Widgets** - Home screen control widgets in multiple layouts (4x1, 4x2, 2x2).
-- **Chromecast** - Stream your playback to TV or smart speakers via Ktor-powered media casting.
-- **Device Capabilities & Performance Report** - A diagnostic result section showing real-time audio output routing (active speaker, headset, Bluetooth), playback path parameters (PCM float, low latency), format support analysis, and local storage footprints, alongside a user-exportable diagnostic performance report.
+### 🛠️ Advanced Tools
+- **Tag Editor** - Edit audio metadata with TagLib & JAudioTagger (supports MP3, FLAC, M4A).
+- **Synchronized Lyrics (LRC)** - Real-time lyrics fetched via LRCLIB and custom providers.
+- **Glance Home Widgets** - Beautiful interactive widgets for your home screen (4x1, 4x2, 2x2).
+- **Casting Support** - Cast audio to smart TVs and wireless speakers via built-in Ktor CIO server.
 
 ---
 
@@ -105,28 +96,28 @@
 | Category | Technology |
 |----------|------------|
 | **Language** | [Kotlin](https://kotlinlang.org/) 100% |
-| **UI Framework** | [Jetpack Compose](https://developer.android.com/jetpack/compose) |
+| **UI Framework** | [Jetpack Compose](https://developer.android.com/jetpack/compose) + Compose for Wear OS |
 | **Design System** | [Material Design 3](https://m3.material.io/) |
-| **Audio Engine** | [Media3 ExoPlayer](https://developer.android.com/guide/topics/media/media3) + FFmpeg |
-| **Architecture** | MVVM with StateFlow/SharedFlow |
-| **DI** | [Hilt](https://dagger.dev/hilt/) |
-| **Database** | [Room](https://developer.android.com/training/data-storage/room) |
-| **Networking** | [Retrofit](https://square.github.io/retrofit/) + OkHttp |
+| **Audio Engine** | [Media3 ExoPlayer](https://developer.android.com/guide/topics/media/media3) + FFmpeg Extension |
+| **Architecture** | Modern Android Architecture (MVVM + StateFlow / SharedFlow) |
+| **Dependency Injection** | [Hilt](https://dagger.dev/hilt/) |
+| **Local Database** | [Room](https://developer.android.com/training/data-storage/room) |
+| **Networking** | [OkHttp](https://square.github.io/okhttp/) + [Retrofit](https://square.github.io/retrofit/) |
 | **Image Loading** | [Coil](https://coil-kt.github.io/coil/) |
-| **Async** | Kotlin Coroutines & Flow |
-| **Background Tasks**| WorkManager |
+| **Concurrency** | Kotlin Coroutines & Flow |
 | **Metadata** | [TagLib](https://github.com/nicholaus/taglib-android) + JAudioTagger |
-| **Widgets** | [Glance](https://developer.android.com/jetpack/compose/glance) |
-| **Casting/Server** | [Ktor Server](https://ktor.io/) (CIO) |
-| **Cloud/Chat API** | [TDLib](https://github.com/tdlib/td) (Telegram Database Library) |
-| **AI Integrations** | [Google Generative AI SDK](https://github.com/google/generative-ai-android) (Gemini) |
+| **Home Widgets** | [Glance](https://developer.android.com/jetpack/compose/glance) |
+| **Casting / Server** | [Ktor](https://ktor.io/) CIO Engine |
+| **Cloud Integrations** | [TDLib](https://github.com/tdlib/td) (Telegram), InnerTube (YouTube Music) |
+| **AI Integration** | [Google Generative AI SDK](https://github.com/google/generative-ai-android) |
 
 ---
 
-## 📱 Requirements
+## 📱 System Requirements
 
-- **Android 11** (API 30) or higher
-- **6GB RAM** recommended for smooth performance
+- **Android Version**: Android 11 (API level 30) or higher
+- **RAM**: 4GB minimum (6GB+ recommended)
+- **Wear OS**: Wear OS 3.0+ for companion features
 
 ---
 
@@ -134,36 +125,33 @@
 
 ### Prerequisites
 
-- Android Studio Ladybug | 2024.2.1 or newer
+- [Android Studio Ladybug (2024.2.1+)](https://developer.android.com/studio)
 - Android SDK 30+ (Compile SDK 37)
 - JDK 21+
 
-### Installation
+### Installation & Build
 
-1. **Clone the repository**
-   ```sh
-   git clone https://github.com/ajaykumarreddy-k/AKR-Music-Mix.git
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/ajaykumarreddy-k/AKR-PixelPlayer.git
+   cd AKR-PixelPlayer/Akr-final\ app
    ```
 
-2. **Configure Local Properties**
-   To enable Telegram music synchronization, create a `local.properties` file in the root directory and add your API credentials:
+2. **Configure API Credentials (Optional)**:
+   If using Telegram cloud streaming, create a `local.properties` file:
    ```properties
    TELEGRAM_API_ID=your_api_id
    TELEGRAM_API_HASH=your_api_hash
    ```
 
-3. **Open in Android Studio**
-   - Open Android Studio
-   - Select "Open an Existing Project"
-   - Navigate to the cloned directory `AKR-Music/Core/Akr-final app`
+3. **Build & Install**:
+   ```bash
+   # Build release APK
+   ./gradlew assembleRelease
 
-4. **Sync and Build**
-   - Wait for Gradle to sync dependencies.
-   - Build the project (`Build` → `Make Project`).
-
-5. **Run**
-   - Connect a device or start an emulator.
-   - Click Run (▶️).
+   # Install directly via ADB
+   adb install -r app/build/outputs/apk/release/app-arm64-v8a-release.apk
+   ```
 
 ---
 
@@ -175,36 +163,35 @@ Akr-final app/
 │   ├── data/
 │   │   ├── database/       # Room entities, DAOs, migrations
 │   │   ├── model/          # Domain models (Song, Album, Artist, etc.)
-│   │   ├── network/        # API services (LRCLIB, Deezer, Cloud integrations)
-│   │   ├── preferences/    # DataStore preferences
-│   │   ├── repository/     # Data repositories
-│   │   ├── service/        # MusicService, HTTP server for Casting, Wear integration
+│   │   ├── network/        # API services (LRCLIB, Cloud integrations)
+│   │   ├── preferences/    # DataStore settings & player preferences
+│   │   ├── repository/     # Data repositories & caching logic
+│   │   ├── service/        # MusicService, DualPlayerEngine, Casting server
 │   │   └── worker/         # WorkManager sync workers
 │   ├── di/                 # Hilt dependency injection modules
 │   ├── presentation/
-│   │   ├── components/     # Reusable Compose components
-│   │   ├── navigation/     # Navigation graph
-│   │   ├── screens/        # Screen composables (About, Accounts, Player, etc.)
-│   │   ├── viewmodel/      # ViewModels
-│   │   └── (service folders)# Auth and dashboards for NetEase, QQ Music, Telegram, Navidrome, Jellyfin
+│   │   ├── components/     # Reusable Compose UI components
+│   │   ├── navigation/     # Jetpack Compose navigation graph
+│   │   ├── screens/        # Player, Search, Library, Settings, Cloud screens
+│   │   └── viewmodel/      # Architecture ViewModels
 │   ├── ui/
 │   │   ├── glancewidget/   # Home screen Glance widgets
-│   │   └── theme/          # Colors, typography, custom shapes, and themes
-│   └── utils/              # Extensions and utilities
+│   │   └── theme/          # Dynamic Material 3 theming & typography
+│   └── utils/              # Extensions, audio parsers, and utilities
 ├── shared/                 # Wear OS data transfer objects (DTOs) & protocols
 ├── wear/                   # Wear OS companion application codebase
-└── innertube/              # Scraper client for YouTube Music search and streaming
+└── innertube/              # High-performance YouTube Music streaming engine
 ```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to open an issue or submit a Pull Request.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+3. Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
