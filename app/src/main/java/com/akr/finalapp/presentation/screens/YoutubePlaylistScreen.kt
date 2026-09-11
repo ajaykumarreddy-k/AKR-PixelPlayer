@@ -97,28 +97,13 @@ fun YoutubePlaylistScreen(
                                 isCurrentSong = stablePlayerState.currentSong?.id == song.id,
                                 onClick = {
                                     Log.e("AKR_MUSIC", "👉 PLAYLIST TAP: ${song.title}")
-                                    Toast.makeText(context, "Connecting to YouTube...", Toast.LENGTH_SHORT).show()
-                                    youtubeViewModel.resolveStreamUrl(song,
-                                        onResolved = { url ->
-                                            Log.e("AKR_MUSIC", "✅ PLAYLIST URL FOUND: $url")
-                                            val updatedSongs = songs.map { s ->
-                                                if (s.id == song.id) {
-                                                    s.copy(contentUriString = url)
-                                                } else {
-                                                    s
-                                                }
-                                            }
-                                            playerViewModel.playSongs(
-                                                updatedSongs,
-                                                song.copy(contentUriString = url),
-                                                title,
-                                                playlistId
-                                            )
-                                        },
-                                        onError = { err ->
-                                            Log.e("AKR_MUSIC", "❌ PLAYLIST STREAM ERROR: $err")
-                                            Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
-                                        }
+                                    // Resolution now happens inside PlayerViewModel.buildResolvedPlaybackMediaItem()
+                                    // BEFORE ExoPlayer.prepare() — no need to block the UI here.
+                                    playerViewModel.playSongs(
+                                        songs,
+                                        song,
+                                        title,
+                                        playlistId
                                     )
                                 },
                                 onMoreOptionsClick = {}

@@ -536,10 +536,13 @@ class DualPlayerEngine @Inject constructor(
 
                 if (adjacentCloudUris.isNotEmpty()) {
                     preResolutionJob = scope.launch {
-                        delay(100) // Reduced: 600ms → 100ms so next-track URL is ready well before a skip
+                        // No delay — start resolving adjacent tracks immediately on transition
+                        // so by the time the user taps Next/Prev, the URL is already cached.
                         try {
                             for (uriToResolve in adjacentCloudUris) {
-                                resolveCloudUri(uriToResolve)
+                                launch(kotlinx.coroutines.Dispatchers.IO) {
+                                    resolveCloudUri(uriToResolve)
+                                }
                             }
                         } catch (e: Exception) {
                             Timber.tag("DualPlayerEngine").w(e, "Error during pre-resolution in onMediaItemTransition")

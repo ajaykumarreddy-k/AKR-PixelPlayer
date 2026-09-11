@@ -481,26 +481,11 @@ fun YoutubeSearchScreen(
                                             isPlaying = stablePlayerState.isPlaying && stablePlayerState.currentSong?.id == song.id,
                                             isCurrentSong = stablePlayerState.currentSong?.id == song.id,
                                             onClick = {
-                                                // 1. Force an Error-level log that Realme cannot block
                                                 Log.e("AKR_MUSIC", "👉 EXACT TAP DETECTED: ${song.title}")
-                                                
-                                                // 2. Force an immediate screen popup so we know the button isn't dead
-                                                Toast.makeText(context, "Connecting to YouTube...", Toast.LENGTH_SHORT).show()
-                                                
-                                                youtubeViewModel.resolveStreamUrl(song,
-                                                    onResolved = { url ->
-                                                        Log.e("AKR_MUSIC", "✅ URL FOUND: $url")
-                                                        val updatedQueue = searchResults.filterIsInstance<com.music.innertube.models.SongItem>().map { s ->
-                                                            val mappedSong = s.toSong()
-                                                            if (mappedSong.id == song.id) mappedSong.copy(contentUriString = url) else mappedSong
-                                                        }
-                                                        playerViewModel.playSongs(updatedQueue, song.copy(contentUriString = url), "YouTube Search", null)
-                                                    },
-                                                    onError = { err ->
-                                                        Log.e("AKR_MUSIC", "❌ STREAM ERROR: $err")
-                                                        Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
-                                                    }
-                                                )
+                                                // Resolution now happens inside PlayerViewModel.buildResolvedPlaybackMediaItem()
+                                                // BEFORE ExoPlayer.prepare() — no need to block the UI with a Toast here.
+                                                val queue = searchResults.filterIsInstance<com.music.innertube.models.SongItem>().map { it.toSong() }
+                                                playerViewModel.playSongs(queue, song, "YouTube Search", null)
                                             },
                                             onMoreOptionsClick = {}
                                         )

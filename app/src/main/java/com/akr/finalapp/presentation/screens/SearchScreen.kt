@@ -469,19 +469,10 @@ fun SearchScreen(
                                                             isPlaying = stablePlayerState.isPlaying && stablePlayerState.currentSong?.id == song.id,
                                                             isCurrentSong = stablePlayerState.currentSong?.id == song.id,
                                                             onClick = {
-                                                                android.widget.Toast.makeText(context, "Connecting to YouTube...", android.widget.Toast.LENGTH_SHORT).show()
-                                                                youtubeViewModel.resolveStreamUrl(song,
-                                                                    onResolved = { url ->
-                                                                        val updatedQueue = ytSearchResults.filterIsInstance<com.music.innertube.models.SongItem>().map { s ->
-                                                                            val mappedSong = s.toSong()
-                                                                            if (mappedSong.id == song.id) mappedSong.copy(contentUriString = url) else mappedSong
-                                                                        }
-                                                                        playerViewModel.playSongs(updatedQueue, song.copy(contentUriString = url), "YouTube Search", null)
-                                                                    },
-                                                                    onError = { err ->
-                                                                        android.widget.Toast.makeText(context, "Error: $err", android.widget.Toast.LENGTH_LONG).show()
-                                                                    }
-                                                                )
+                                                                // Resolution now happens inside PlayerViewModel.buildResolvedPlaybackMediaItem()
+                                                                // BEFORE ExoPlayer.prepare() — no blocking UI wait needed.
+                                                                val queue = ytSearchResults.filterIsInstance<com.music.innertube.models.SongItem>().map { it.toSong() }
+                                                                playerViewModel.playSongs(queue, song, "YouTube Search", null)
                                                             },
                                                             onMoreOptionsClick = { handleSongMoreOptionsClick(song) }
                                                         )
