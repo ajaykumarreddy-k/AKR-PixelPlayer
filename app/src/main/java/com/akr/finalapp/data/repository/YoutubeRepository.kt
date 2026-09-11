@@ -19,6 +19,52 @@ import kotlinx.coroutines.launch
 @Singleton
 class YoutubeRepository @Inject constructor() {
 
+    // ---------------------------------------------------------------------------
+    // Signature timestamp cache
+    // YoutubeJavaScriptPlayerManager.getSignatureTimestamp() downloads and parses
+    // the YouTube JS player file (~300-500ms) and returns the same integer for ALL
+    // video IDs within a player version. Cache it for 6 hours — YouTube only rolls
+    // a new player a few times per week, so a stale value is automatically retried
+    // on the next resolution attempt if deobfuscation fails.
+    // ---------------------------------------------------------------------------
+    @Volatile private var cachedSignatureTimestamp: Int? = null
+    @Volatile private var signatureTimestampFetchedAt: Long = 0L
+    private val SIGNATURE_CACHE_TTL_MS = 6 * 60 * 60 * 1000L // 6 hours
+
+    // ---------------------------------------------------------------------------
+    // Strategy 1 (NewPipe page scrape) skip-if-failing tracker
+    // newPipePlayer() fetches youtube.com/watch?v=... (~500-900ms) and is blocked
+    // by YouTube's bot detection frequently. If it has failed in the last 5 minutes
+    // skip it entirely and go straight to the faster InnerTube parallel race.
+    // ---------------------------------------------------------------------------
+    @Volatile private var newPipeLastFailedAt: Long = 0L
+    private val NEWPIPE_SKIP_WINDOW_MS = 5 * 60 * 1000L // 5 minutes
+
+    private suspend fun getCachedSignatureTimestamp(videoId: String): Int? {
+        val now = System.currentTimeMillis()
+        val cached = cachedSignatureTimestamp
+        if (cached != null && (now - signatureTimestampFetchedAt) < SIGNATURE_CACHE_TTL_MS) {
+            android.util.Log.d("AKR_MUSIC", "⚡ signatureTimestamp CACHE HIT: $cached")
+            return cached
+        }
+        return withContext(Dispatchers.IO) {
+            android.util.Log.d("AKR_MUSIC", "🔄 Fetching signatureTimestamp from YouTube JS player...")
+            NewPipeExtractor.getSignatureTimestamp(videoId).getOrNull()?.also { ts ->
+                cachedSignatureTimestamp = ts
+                signatureTimestampFetchedAt = System.currentTimeMillis()
+                android.util.Log.d("AKR_MUSIC", "✅ signatureTimestamp fetched and cached: $ts")
+            }
+        }
+    }
+
+    // Call this at app startup to pre-warm the signature timestamp cache.
+    // This is fire-and-forget; failure is silently ignored.
+    suspend fun preWarmSignatureTimestamp() = withContext(Dispatchers.IO) {
+        if (cachedSignatureTimestamp == null) {
+            runCatching { getCachedSignatureTimestamp("dQw4w9WgXcQ") } // stable well-known ID
+        }
+    }
+
     suspend fun search(query: String, filterType: com.akr.finalapp.data.model.SearchFilterType): Result<Pair<List<com.music.innertube.models.YTItem>, String?>> = withContext(Dispatchers.IO) {
         runCatching {
             if (filterType == com.akr.finalapp.data.model.SearchFilterType.ALL) {
@@ -131,36 +177,55 @@ class YoutubeRepository @Inject constructor() {
 
             // =========================================================================
             // STRATEGY 1 & 2: Direct Video ID Extraction
-            // If videoId is a valid 11-character YouTube ID, attempt direct extraction first
+            // Strategy 1 (NewPipe page scrape) and signatureTimestamp fetch run IN
+            // PARALLEL. If Strategy 1 succeeds first, we return immediately. If it
+            // fails, the signature timestamp is already ready for Strategy 2's race.
             // =========================================================================
             if (isVideoIdValid) {
-                // Strategy 1: NewPipe direct page scrape — no API auth/PoToken needed.
-                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 1: Trying NewPipe direct page scrape for videoId=$videoId")
-                val newPipeStreams = try {
-                    NewPipeExtractor.newPipePlayer(videoId)
-                } catch (e: Exception) {
-                    android.util.Log.e("AKR_MUSIC", "❌ Strategy 1 (NewPipe) exception: ${e.message}")
-                    emptyList()
+                val now = System.currentTimeMillis()
+                val skipNewPipe = (now - newPipeLastFailedAt) < NEWPIPE_SKIP_WINDOW_MS
+
+                if (skipNewPipe) {
+                    android.util.Log.d("AKR_MUSIC", "⏭️ Skipping Strategy 1 (NewPipe failed recently at ${newPipeLastFailedAt}ms ago) — going straight to Strategy 2")
                 }
-                android.util.Log.d("AKR_MUSIC", "📡 NewPipe streams count=${newPipeStreams.size}")
 
-                if (newPipeStreams.isNotEmpty()) {
-                    val audioItagPreference = listOf(141, 140, 139, 251, 250, 249)
-                    val url = audioItagPreference
-                        .firstNotNullOfOrNull { itag -> newPipeStreams.find { it.first == itag }?.second }
-                        ?: newPipeStreams.firstOrNull()?.second
+                // Launch Strategy 1 (NewPipe) and signatureTimestamp fetch concurrently
+                val signatureTimestampDeferred = kotlinx.coroutines.GlobalScope.async(Dispatchers.IO) {
+                    getCachedSignatureTimestamp(videoId)
+                }
 
-                    if (url != null) {
-                        android.util.Log.d("AKR_MUSIC", "✅ Strategy 1 (NewPipe) succeeded for videoId=$videoId: ${url.take(80)}...")
-                        return@runCatching url
+                if (!skipNewPipe) {
+                    android.util.Log.d("AKR_MUSIC", "🔄 Strategy 1: Trying NewPipe direct page scrape (parallel with sig timestamp fetch)")
+                    val newPipeStreams = try {
+                        NewPipeExtractor.newPipePlayer(videoId)
+                    } catch (e: Exception) {
+                        android.util.Log.e("AKR_MUSIC", "❌ Strategy 1 (NewPipe) exception: ${e.message}")
+                        newPipeLastFailedAt = System.currentTimeMillis()
+                        emptyList()
                     }
+
+                    android.util.Log.d("AKR_MUSIC", "📡 NewPipe streams count=${newPipeStreams.size}")
+                    if (newPipeStreams.isNotEmpty()) {
+                        val audioItagPreference = listOf(141, 140, 139, 251, 250, 249)
+                        val url = audioItagPreference
+                            .firstNotNullOfOrNull { itag -> newPipeStreams.find { it.first == itag }?.second }
+                            ?: newPipeStreams.firstOrNull()?.second
+                        if (url != null) {
+                            signatureTimestampDeferred.cancel()
+                            android.util.Log.d("AKR_MUSIC", "✅ Strategy 1 (NewPipe) succeeded for videoId=$videoId")
+                            return@runCatching url
+                        }
+                    }
+                    // Strategy 1 failed — mark it and let Strategy 2 proceed with the
+                    // signature timestamp that was fetching in parallel
+                    newPipeLastFailedAt = System.currentTimeMillis()
                 }
 
-                // Strategy 2: Multi-client InnerTube clients + NewPipe cipher deobfuscation
-                // All clients are tried IN PARALLEL — we take the first one that returns a
-                // usable URL instead of waiting for each serially (saves ~800-1500ms).
-                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 2: Trying Multi-client InnerTube (parallel) + cipher for videoId=$videoId")
-                val signatureTimestamp = NewPipeExtractor.getSignatureTimestamp(videoId).getOrNull()
+                // Strategy 2: Multi-client InnerTube parallel race
+                // signatureTimestampDeferred is already running (or done) from the parallel launch above.
+                // Await it — if it was already complete this is instant; otherwise we wait the remaining time.
+                android.util.Log.d("AKR_MUSIC", "🔄 Strategy 2: Awaiting signatureTimestamp (may already be cached/ready)...")
+                val signatureTimestamp = signatureTimestampDeferred.await()
                 android.util.Log.d("AKR_MUSIC", "📡 Strategy 2 signatureTimestamp=$signatureTimestamp")
 
                 val clientsToTry = listOf(
@@ -212,7 +277,6 @@ class YoutubeRepository @Inject constructor() {
                                         }
                                     }
                                 } catch (e: CancellationException) {
-                                    // Cancelled because another client won — expected, not an error
                                     return@launch
                                 } catch (e: Exception) {
                                     android.util.Log.e("AKR_MUSIC", "❌ Strategy 2 client ${client.clientName} failed: ${e.message}")
@@ -223,14 +287,11 @@ class YoutubeRepository @Inject constructor() {
                                     android.util.Log.d("AKR_MUSIC", "✅ Strategy 2 (parallel) winner: client=${client.clientName}")
                                     winner.complete(clientResult)
                                 } else if (pendingCount.decrementAndGet() == 0 && !winner.isCompleted) {
-                                    // All clients finished with no winner — resolve with null so await() returns
                                     winner.complete(null)
                                 }
                             }
                         }
-                        // Await the winner (always completes: either a URL or null when all fail)
                         val result = winner.await()
-                        // Cancel remaining jobs once we have our answer
                         jobs.forEach { it.cancel() }
                         result
                     }

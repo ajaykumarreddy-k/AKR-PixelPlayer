@@ -3496,7 +3496,16 @@ class PlayerViewModel @Inject constructor(
                 )
             }
         } else {
-            beginPreparingSong(effectiveStartSong)
+            // Update queue and player state immediately so the UI shows the song info.
+            // For YouTube tracks we defer the "Preparing playback…" spinner until AFTER
+            // URL resolution completes — otherwise it shows for the full 800-1300ms of
+            // resolution time, which is what the user perceives as "Connecting to YouTube".
+            val isYouTubeSong = run {
+                val uri = MediaItemBuilder.playbackUri(effectiveStartSong)
+                uri.scheme?.equals("youtube", ignoreCase = true) == true
+            }
+
+            // Show song immediately in queue + player state
             _playerUiState.update {
                 it.copy(
                     currentPlaybackQueue = songsToPlay.toPlaybackQueue(),
@@ -3514,7 +3523,19 @@ class PlayerViewModel @Inject constructor(
             }
             _isSheetVisible.value = true
 
+            // For local/non-YouTube tracks show spinner now (fast path).
+            // For YouTube, the spinner appears AFTER resolution (see below).
+            if (!isYouTubeSong) {
+                beginPreparingSong(effectiveStartSong)
+            }
+
             val startMediaItem = buildResolvedPlaybackMediaItem(effectiveStartSong)
+
+            // Resolution complete — now show the preparing spinner for YouTube
+            // (ExoPlayer will dismiss it almost immediately when STATE_READY fires)
+            if (isYouTubeSong) {
+                beginPreparingSong(effectiveStartSong)
+            }
 
             val playSongsAction = {
                 // Use Direct Engine Access to avoid TransactionTooLargeException on Binder

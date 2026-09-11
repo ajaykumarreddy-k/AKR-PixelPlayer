@@ -15,6 +15,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.akr.finalapp.data.preferences.UserPreferencesRepository
 import com.akr.finalapp.data.repository.ArtistImageRepository
+import com.akr.finalapp.data.repository.YoutubeRepository
 import com.akr.finalapp.data.telegram.TelegramRepository
 import com.akr.finalapp.presentation.viewmodel.LibraryStateHolder
 import com.akr.finalapp.presentation.viewmodel.ThemeStateHolder
@@ -67,6 +68,9 @@ class PixelPlayApplication : Application(), ImageLoaderFactory, Configuration.Pr
 
     @Inject
     lateinit var userPreferencesRepository: dagger.Lazy<UserPreferencesRepository>
+
+    @Inject
+    lateinit var youtubeRepository: dagger.Lazy<YoutubeRepository>
 
     private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -121,6 +125,12 @@ class PixelPlayApplication : Application(), ImageLoaderFactory, Configuration.Pr
             if (savedLimit != null) {
                 AlbumArtCacheManager.configuredCacheLimitMb = savedLimit.toLong()
             }
+        }
+
+        // Pre-warm the YouTube JS player signature timestamp cache so the first
+        // song tap never has to wait for the 300-500ms JS player download.
+        startupScope.launch {
+            runCatching { youtubeRepository.get().preWarmSignatureTimestamp() }
         }
     }
 
